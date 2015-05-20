@@ -343,6 +343,63 @@ function Get-OpenStackDatabaseUser {
     }
 }
 
+# Issue 157 Implement Set-OpenStackDatabaseInstanceSize
+function Set-OpenStackDatabaseInstanceSize {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account with -Account parameter"),
+        [Parameter (Mandatory=$True)] [string] $FlavorRef = $(throw "Please specify required Flavor Reference with -FlavorRef parameter"),
+        [Parameter (Mandatory=$True)] [string] $InstanceId = $(throw "Please specify required Instance ID with -InstanceId parameter"),
+        [Parameter (Mandatory=$False)][string] $RegionOverride
+        )
+
+    Get-OpenStackAccount -Account $Account
+    
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+
+    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Set-OpenStackDatabaseInstanceSize"
+        Write-Debug -Message "Account.......: $Account" 
+        Write-Debug -Message "FlavorRef.....: $FlavorRef"
+        Write-Debug -Message "InstanceId....: $InstanceId"
+        Write-Debug -Message "Region........: $Region"
+
+
+
+        $Flavor = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.FlavorRef]) $FlavorRef
+        Write-Host "Flavor Ref"
+
+        $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
+        Write-Host "Instance ID"
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+        Write-Host "Cancellation Token"
+
+        $AsyncCompletionOption = New-Object ([net.openstack.Core.AsyncCompletionOption])
+        Write-Host "Completion Option"
+        
+        $ComputeDatabasesProvider.ResizeDatabaseInstanceAsync($dbiid, $Flavor, $AsyncCompletionOption, $CancellationToken, $null).Result
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+}
+
+
 # Issue 160
 function Revoke-OpenStackDatabaseUserAccess {
     Param(
@@ -351,7 +408,6 @@ function Revoke-OpenStackDatabaseUserAccess {
         [Parameter (Mandatory=$True)] [string] $DatabaseName = $(throw "Please specify required Database Name with -DatabaseName parameter"),
         [Parameter (Mandatory=$True)] [string] $InstanceId = $(throw "Please specify required Instance ID with -InstanceId parameter"),
         [Parameter (Mandatory=$False)][string] $RegionOverride
-
         )
 
     Get-OpenStackAccount -Account $Account
