@@ -57,6 +57,50 @@ function Get-OpenStackDatabasesProvider {
     }
 }
 
+# Issue 135
+function Confirm-OpenStackDatabaseRootEnabledStatus {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
+        [Parameter (Mandatory=$True)] [string] $InstanceId = $(throw "Please specify required Instance ID by using the -InstanceId parameter"),
+        [Parameter (Mandatory=$False)][string] $RegionOverride
+    )
+
+
+    Get-OpenStackAccount -Account $Account
+    
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+
+    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Confirm-OpenStackDatabaseRootEnabledStatus"
+        Write-Debug -Message "Account.......: $Account" 
+        Write-Debug -Message "InstanceId....: $InstanceId"
+        Write-Debug -Message "RegionOverride: $RegionOverride" 
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+        $iid = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
+
+        $ComputeDatabasesProvider.CheckRootEnabledStatusAsync($iid, $CancellationToken).Result
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+}
+
 # Issue 138
 function New-OpenStackDatabaseInstance {
     Param(
