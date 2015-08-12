@@ -3385,10 +3385,10 @@ function Set-OpenStackLBSessionPersistence {
     }
 <#
  .SYNOPSIS
- Set a Health Monitor.
+ Set session persistence.
 
  .DESCRIPTION
- The Set-OpenStackLBSessionPersistence cmdlet sets the health monitor configuration for a load balancer.
+ The Set-OpenStackLBSessionPersistence cmdlet sets the session persistence configuration for a load balancer.
  
  .PARAMETER Account
  Use this parameter to indicate which account you would like to execute this request against.
@@ -3397,8 +3397,90 @@ function Set-OpenStackLBSessionPersistence {
  .PARAMETER LBID
  An object of type net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerID that identifies the Load Balancer.
 
- .PARAMETER HealthMonitor
- The updated health monitor configuration..
+ .PARAMETER SessionPersistence
+ The session persistence configuration.
+
+ .PARAMETER WaitForTask
+ Specifies whether the calling function will wait for this task to complete (True) or continue without waiting (False).
+
+ .PARAMETER RegionOverride
+ This parameter will temporarily override the default region set in PoshStack configuration file.
+
+ .EXAMPLE
+ PS C:\Users\Administrator>
+
+
+ .LINK
+ http://api.rackspace.com/api-ref-load-balancers.html
+#>
+}
+
+# Issue 102 Implement Update-CloudLoadBalancer
+function Update-RSLoadBalancer {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
+        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerId] $LBID = $(throw "Please specify the required Load Balancer ID by using the -LBID parameter"),
+        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerUpdate] $LBUpdate = $(throw "Please specify the required Load Balancer Update infomration by using the -LBUpdate parameter"),
+        [Parameter (Mandatory=$False)][bool]   $WaitForTask = $False,
+        [Parameter (Mandatory=$False)][string] $RegionOverride
+    )
+
+    Get-OpenStackAccount -Account $Account
+    
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+
+    $LBProvider = Get-OpenStackLBProvider -Account rackiad -RegionOverride $Region
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Update-RSLoadBalancer"
+        Write-Debug -Message "Account.........................: $Account" 
+        Write-Debug -Message "LBID............................: $LBID"
+        Write-Debug -Message "LBUpdate........................: $LBUpdate"
+        Write-Debug -Message "WaitForTask.....................: $WaitForTask"
+        Write-Debug -Message "Region..........................: $Region" 
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+
+ #           await clbp.UpdateLoadBalancerAsync(loadBalancerId, lbUpdate, AsyncCompletionOption.RequestCompleted, CancellationToken.None, null);
+
+        if($WaitForTask) {
+            $LBProvider.UpdateLoadBalancerAsync($LBID, $LBUpdate, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+        } else {
+            $LBProvider.UpdateLoadBalancerAsync($LBID, $LBUpdate, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+        }
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+<#
+ .SYNOPSIS
+ Update load balancer.
+
+ .DESCRIPTION
+ The Update-RSLoadBalancer cmdlet updates attributes for an existing load balancer.
+ 
+ .PARAMETER Account
+ Use this parameter to indicate which account you would like to execute this request against.
+ Valid choices are defined in PoshStack configuration file.
+
+ .PARAMETER LBID
+ An object of type net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerID that identifies the Load Balancer.
+
+ .PARAMETER LBUpdate
+ An object of type net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerUpdate that contains the updated information for the Load Balancer.
 
  .PARAMETER WaitForTask
  Specifies whether the calling function will wait for this task to complete (True) or continue without waiting (False).
