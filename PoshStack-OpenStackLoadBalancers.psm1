@@ -3497,4 +3497,80 @@ function Update-RSLoadBalancer {
 #>
 }
 
+# Issue #103 Implement Update-CloudLoadBalancerMetadataItem
+function Update-RSLBMetadataItem {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
+        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerId] $LBID = $(throw "Please specify the required Load Balancer ID by using the -LBID parameter"),
+        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.LoadBalancers.MetadataId] $MetadataID = $(throw "Please specify the required Metadata ID by using the -MetadataID parameter"),
+        [Parameter (Mandatory=$True)] [string] $Metadata = $(throw "Please specify the required metadata information by using the -Metadata parameter."),
+        [Parameter (Mandatory=$False)][string] $RegionOverride
+    )
+
+    Get-OpenStackAccount -Account $Account
+    
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+
+    $LBProvider = Get-OpenStackLBProvider -Account rackiad -RegionOverride $Region
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Update-RSLBMetadataItem"
+        Write-Debug -Message "Account.........................: $Account" 
+        Write-Debug -Message "LBID............................: $LBID"
+        Write-Debug -Message "MetadataID......................: $MetadataID"
+        Write-Debug -Message "Metadata........................: $Metadata"
+        Write-Debug -Message "Region..........................: $Region" 
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+
+        $LBProvider.UpdateLoadBalancerMetadataItemAsync($LBID, $MetadataID, $Metadata, $CancellationToken, $null).Result
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+<#
+ .SYNOPSIS
+ Update load balancer metadata item.
+
+ .DESCRIPTION
+ The Update-RSLBMetadataItem cmdlet sets the value for a metadata item associated with a load balancer.
+ 
+ .PARAMETER Account
+ Use this parameter to indicate which account you would like to execute this request against.
+ Valid choices are defined in PoshStack configuration file.
+
+ .PARAMETER LBID
+ An object of type net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerID that identifies the Load Balancer.
+
+ .PARAMETER MetadataID
+ An object of type net.openstack.Providers.Rackspace.Objects.LoadBalancers.MetadataId that identifies the metadata item to be updated.
+
+ .PARAMETER Metadata
+ The new value for the metadata item.
+
+ .PARAMETER RegionOverride
+ This parameter will temporarily override the default region set in PoshStack configuration file.
+
+ .EXAMPLE
+ PS C:\Users\Administrator>
+
+
+ .LINK
+ http://api.rackspace.com/api-ref-load-balancers.html
+#>
+}
+
 Export-ModuleMember -Function *
