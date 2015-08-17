@@ -1200,7 +1200,7 @@ function Get-OpenStackDNSRecord {
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
         [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
         [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.Dns.DomainId] $DomainId = $(throw "Please specify the required Domain ID by using the -DomainId parameter"),
-        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.Dns.RecordType] $RecordType = $(throw "Please specify the required Record Type by using the -RecordType parameter"),
+        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.Dns.DnsRecordType] $RecordType = $(throw "Please specify the required Record Type by using the -RecordType parameter"),
         [Parameter (Mandatory=$True)] [string] $RecordName = $(throw "Please specify the required Record Name by using the -RecordName parameter"),
         [Parameter (Mandatory=$True)] [string] $RecordData = $(throw "Please specify the required Record Data by using the -RecordData parameter"),
         [Parameter (Mandatory=$False)][int]    $ListOffset = $null,
@@ -1376,7 +1376,7 @@ function Remove-OpenStackDNSDomain {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
         [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
-        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Dns.DomainId[]] $ListOfDomainIDs = $(throw "Please specify the list of Domain IDs by using the -ListOfDomainIDs parameter"),
+        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.Dns.DomainId[]] $ListOfDomainIDs = $(throw "Please specify the list of Domain IDs by using the -ListOfDomainIDs parameter"),
         [Parameter (Mandatory=$False)][bool]   $WaitForTask = $False,
         [Parameter (Mandatory=$True)] [bool]   $DeleteSubdomain = $(throw "Please specify the option (true/false) of deleting the subdomains by using the -DeleteSubdomain parameter"),
         [Parameter (Mandatory=$False)][string] $RegionOverride
