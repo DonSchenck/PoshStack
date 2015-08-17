@@ -3816,4 +3816,84 @@ function Update-RSLBSSLConfiguration {
 #>
 }
 
+# Issue 107 Implement Update-CloudLoadBalancerThrottles
+function Update-RSLBConnectionThrottle {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
+        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerId] $LBID = $(throw "Please specify the required Load Balancer ID by using the -LBID parameter"),
+        [Parameter (Mandatory=$True)] [net.openstack.Providers.Rackspace.Objects.LoadBalancers.ConnectionThrottles] $Throttle = $(throw "Please specify the required connection throttle information by using the -ConnectionThrottle parameter"),
+        [Parameter (Mandatory=$False)][bool]   $WaitForTask = $False,
+        [Parameter (Mandatory=$False)][string] $RegionOverride
+    )
+
+    Get-OpenStackAccount -Account $Account
+    
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+
+    $LBProvider = Get-OpenStackLBProvider -Account rackiad -RegionOverride $Region
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Update-RSLBConnectionThrottle"
+        Write-Debug -Message "Account.........................: $Account" 
+        Write-Debug -Message "LBID............................: $LBID"
+        Write-Debug -Message "ConnectionThrottle..............: $ConnectionThrottle"
+        Write-Debug -Message "WaitForTask.....................: $WaitForTask" 
+        Write-Debug -Message "Region..........................: $Region" 
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+
+        if($WaitForTask) {
+            $LBProvider.UpdateThrottlesAsync($LBID, $ConnectionThrottle, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+        } else {
+            $LBProvider.UpdateThrottlesAsync($LBID, $ConnectionThrottle, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+        }
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+<#
+ .SYNOPSIS
+ Update Connection Throttles.
+
+ .DESCRIPTION
+ The Update-RSLBConnectionThrottle cmdlet updates the connection throttling configuration for a load balancer.
+ 
+ .PARAMETER Account
+ Use this parameter to indicate which account you would like to execute this request against.
+ Valid choices are defined in PoshStack configuration file.
+
+ .PARAMETER LBID
+ An object of type net.openstack.Providers.Rackspace.Objects.LoadBalancers.LoadBalancerID that identifies the Load Balancer.
+
+ .PARAMETER ConnectionThrottle
+ An object of type net.openstack.Providers.Rackspace.Objects.LoadBalancers.ConnectionThrottles that contains the updated connetion throttles for the Load Balancer.
+
+ .PARAMETER WaitForTask
+ Specifies whether the calling function will wait for this task to complete (True) or continue without waiting (False).
+
+ .PARAMETER RegionOverride
+ This parameter will temporarily override the default region set in PoshStack configuration file.
+
+ .EXAMPLE
+ PS C:\Users\Administrator>
+
+
+ .LINK
+ http://api.rackspace.com/api-ref-load-balancers.html
+#>
+}
+
 Export-ModuleMember -Function *
