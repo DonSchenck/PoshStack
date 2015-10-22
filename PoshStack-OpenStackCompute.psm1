@@ -797,12 +797,22 @@ function Get-OpenStackComputeServer {
                     foreach ($server in $ServerList)
                     {
                         Add-Member -InputObject $server -MemberType NoteProperty -Name Region -Value $Region
-                        $imageId = $server.Image.id
-                        $imageName = Get-OpenStackComputeServerImage -Account $Account -RegionOverride $Region -ImageId $ImageId
-                        Add-Member -InputObject $server -MemberType NoteProperty -Name ImageName -Value $imageName.Name
-                        $flavorId = $server.Flavor.Id
-                        $flavorName = Get-OpenStackComputeServerFlavor -Account $Account -RegionOverride $Region -FlavorId $flavorId
-                        Add-Member -InputObject $server -MemberType NoteProperty -Name FlavorName -Value $flavorName.Name
+
+                        Try {
+                            $imageId = $server.Image.id
+                            $imageName = Get-OpenStackComputeServerImage -Account $Account -RegionOverride $Region -ImageId $ImageId
+                            Add-Member -InputObject $server -MemberType NoteProperty -Name ImageName -Value $imageName.Name
+                        } Catch {
+                            Add-Member -InputObject $server -MemberType NoteProperty -Name ImageName -Value "Unknown"
+                        }
+
+                        Try {
+                            $flavorId = $server.Flavor.Id
+                            $flavorName = Get-OpenStackComputeServerFlavor -Account $Account -RegionOverride $Region -FlavorId $flavorId
+                            Add-Member -InputObject $server -MemberType NoteProperty -Name FlavorName -Value $flavorName.Name
+                        } Catch {
+                            Add-Member -InputObject $server -MemberType NoteProperty -Name FlavorName -Value "Unknown"
+                        }
                     }
                     if ($Details) {
         		        $ServerList 
