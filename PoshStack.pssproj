@@ -43,6 +43,7 @@
     <Compile Include="Profile.ps1" />
     <Compile Include="README.md" />
     <Compile Include="Scripts\Build.ps1" />
+    <Compile Include="Scripts\PushToNuget.ps1" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Scripts\" />
