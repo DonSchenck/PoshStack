@@ -13,5 +13,5 @@ $CMD = "$env:LocalAppData\NuGet\NuGet.exe"
 $arg1 = 'push'
 $arg2 = $PackageFile.Name
 $arg3 = "%NUGET_APIKEY_PASSWORD%"
-
+$arg3= "cf498f45-8fdb-4428-9d99-426a56d4729c"
 & $CMD $arg1 $arg2 $arg3
