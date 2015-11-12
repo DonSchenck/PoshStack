@@ -9,6 +9,6 @@ $a = $a + "TH{border-width: 1px;padding: 0px;border-style: solid;border-color: b
 $a = $a + "TD{border-width: 1px;padding: 0px;border-style: solid;border-color: black;}"
 $a = $a + "</style>"
 
-Get-OpenStackComputeServerImages -Account devstack  | ConvertTo-Html -head $a | Out-File C:\Temp\get_cloudserverimages.html
+Get-OpenStackComputeServerImage -Account rackiad  | ConvertTo-Html -head $a | Out-File C:\Temp\get_cloudserverimages.html
 #Get-CloudServerImages -Account demo | WHERE {$_.name -eq 'Windows Server 2008 R2 SP1' } | ConvertTo-Html -head $a | Out-File C:\Temp\get_cloudserverimages.html
 Invoke-Expression C:\Temp\get_cloudserverimages.html
