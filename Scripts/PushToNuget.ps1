@@ -3,7 +3,7 @@
 #
 
 # First, we need to find the name of the package
-$PackageFile = Get-ChildItem -Filter *.nupkg | Select-Object -First 1
+$PackageFile = Get-ChildItem -Filter *.nupkg | Sort-Object name -descending | Select-Object -First 1
 
 # If null or empty, bail immediately
 
