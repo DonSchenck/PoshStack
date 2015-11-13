@@ -12,5 +12,5 @@ $PackageFile = Get-ChildItem -Filter *.nupkg | Sort-Object name -descending | Se
 $CMD = "$env:LocalAppData\NuGet\NuGet.exe"
 $arg1 = 'push'
 $arg2 = $PackageFile.Name
-$arg3 = "$env:NUGET_APIKEY_PASSWORD"
+$arg3 = "$env:BAMBOO_NUGET_APIKEY_PASSWORD"
 & $CMD $arg1 $arg2 $arg3
