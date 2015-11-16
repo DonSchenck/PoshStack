@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>PoshStack</id>
+        <version>0.3.0</version>
+        <authors>opensource</authors>
+        <owners>opensource</owners>
+        <projectUrl>https://Github.com/DonSchenck/PoshStack</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>PoshStack is the PowerShell client for OpenStack.</description>
+        <releaseNotes>BETA</releaseNotes>
+        <copyright>Copyright 2015</copyright>
+        <tags>PowerShell OpenStack</tags>
+    </metadata>
+    <files>
+        <file src="bin\*" target="bin\" />
+        <file src="Examples\*" target="Examples\" />
+        <file src="*.psm1" target="" />
+        <file src="*.ps1" target="" />
+        <file src="PoshStack.psd1" target="PoshStack.psd1" />
+        <file src="poshstack_getting_started_guide.md" target="poshstack_getting_started_guide.md" />
+        <file src="README.md" target="README.md" />
+    </files>
+</package>
