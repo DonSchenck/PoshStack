@@ -6,7 +6,7 @@
 $PackageFile = Get-ChildItem -Filter *.nupkg | Sort-Object name -descending | Select-Object -First 1
 
 # If null or empty, bail immediately
-
+# TODO TEST FOR NULL
 
 # Now we can push it to nuget.org using the NuGet command line tool
 $CMD = "$env:LocalAppData\NuGet\NuGet.exe"
