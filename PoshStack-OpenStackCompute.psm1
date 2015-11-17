@@ -407,12 +407,12 @@ function Get-OpenStackComputeServerAddress {
 #UpdateServer
 function Update-OpenStackComputeServer {
     Param(
-        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -account parameter"),
-        [Parameter (Mandatory=$False)][string] $RegionOverride,
-        [Parameter (Mandatory=$False)][string] $ServerId,
-        [Parameter (Mandatory=$False)][string] $ServerName,
-        [Parameter (Mandatory=$False)][string] $AccessIPv4,
-        [Parameter (Mandatory=$False)][string] $AccessIPv6
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify the required OpenStack Account by using the -Account parameter"),
+        [Parameter (Mandatory=$True)] [string] $ServerId = $(throw "Please specify the required Server ID by using the -ServerId parameter"),
+        [Parameter (Mandatory=$False)][string] $ServerName = $null,
+        [Parameter (Mandatory=$False)][string] $AccessIPv4 = $null,
+        [Parameter (Mandatory=$False)][string] $AccessIPv6 = $null,
+        [Parameter (Mandatory=$False)][string] $RegionOverride = $null
     )
 
     $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
@@ -433,9 +433,19 @@ function Update-OpenStackComputeServer {
     Write-Debug -Message "AccessIPv6...: $AccessIPv6"
     Write-Debug -Message "Region.......: $Region"
 
+
+	# Convert IP address types, handling null values along the way.
+    if (![string]::IsNullOrEmpty($AccessIPv4)) {
+		$ipv4 = [System.Net.IPAddress]$AccessIPv4
+	}
+
+    if (![string]::IsNullOrEmpty($AccessIPv4)) {
+		$ipv6 = [System.Net.IPAddress]$AccessIPv6
+	}
+
             
     # Update the Server
-    $OpenStackComputeServersProvider.UpdateServer($ServerId, $ServerName, $AccessIPv4, $AccessIPv6, $Region, $Null)
+    $OpenStackComputeServersProvider.UpdateServer($ServerId, $ServerName, $ipv4, $ipv6, $Region, $Null)
 
 
 <#
