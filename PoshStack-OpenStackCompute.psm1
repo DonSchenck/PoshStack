@@ -475,7 +475,7 @@ function Update-OpenStackComputeServer {
  This parameter will temporarily override the default region set in PoshStack configuration file. 
 
  .EXAMPLE
- PS C:\Users\Administrator> Update-OpenStackComputeServer -Account demo -ServerId "foo" -ServerName "TheNewName"
+ PS C:\Users\Administrator> Update-OpenStackComputeServer -Account demo -ServerId "foo" -ServerName "The New Name"
  This example will rename server "foo" to "TheNewName".
  
  .LINK
