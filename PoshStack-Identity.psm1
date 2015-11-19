@@ -6,24 +6,15 @@ PoshStack
 
 Description
 -----------
-**TODO**PowerShell v3 module for interaction with NextGen Rackspace Cloud API (PoshNova) 
+PowerShell v5 module for interaction with OpenStack
 
 Identity v2.0 API reference
 ---------------------------
-http://docs.rackspace.com/auth/api/v2.0/auth-client-devguide/content/Overview-d1e65.html
+https://developer.rackspace.com/docs/cloud-identity/v2/developer-guide/
 
 ############################################################################################>
 
 
-<#
-List of cmdlets missing or not working
------------------------------
-- Authenticate User - Implemented in Get-AuthToken(main module)
-Get User Credentials - Currently-authenticated user details are already contained in $token
-List Crendentials - these details are already in the $token variable
-- Reset User Api Key - Reset-OpenStackIdentityUserApi #### Unsupported - need to test further ####
-Revoke Token
-#>
 function Get-OpenStackIdentityProvider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account with -Account parameter")
@@ -43,7 +34,6 @@ function Get-OpenStackIdentityProvider {
             $OpenStackId.Username = $Credentials.CloudUsername
             $OpenStackId.APIKey   = $Credentials.CloudAPIKey
             $Global:OpenStackId = New-Object net.openstack.Providers.Rackspace.CloudIdentityProvider($OpenStackId)
-#            Return New-Object net.openstack.Providers.Rackspace.CloudIdentityProvider($OpenStackId)
             Return $Global:OpenStackId
         }
         "OpenStack" {
@@ -85,34 +75,7 @@ function Get-OpenStackIdentityRole {
  This example shows how to get a list of all networks currently deployed for prod account.
 
  .LINK
- http://docs.rackspace.com/auth/api/v2.0/auth-client-devguide/content/GET_listRoles_v2.0_OS-KSADM_roles_Role_Calls.html
-#>
-}
-
-function Get-OpenStackIdentityTenant {
-    param (
-        [Parameter(Mandatory=$True)][string] $Account = $(throw "Please specify required Cloud Account with -Account parameter")
-    )
-
-    $OpenStackIdentityProvider = Get-OpenStackIdentityProvider $Account
-    $OpenStackIdentityProvider.ListTenants($null)
-
-<#
- .SYNOPSIS
- Get a list of tenants in an OpenStack deployment.
-
- .DESCRIPTION
- The Get-OpenStackIdentityTenants cmdlet will display a list of tenants on an OpenStack deployment. This is not really used on Rackspace Public cloud.
-
- .PARAMETER Account
- Use this parameter to indicate which account you would like to execute this request against. 
- Valid choices are defined in PoshNova configuration file.
-
- .EXAMPLE
- PS C:\> Get-OpenStackIdentityRoles prod
- 
- .LINK
- http://docs.rackspace.com/auth/api/v2.0/auth-client-devguide/content/GET_listTenants_v2.0_tenants_Tenant_Calls.html
+ https://developer.rackspace.com/docs/cloud-identity/v2/developer-guide/#document-api-operations/role-operations
 #>
 }
 
