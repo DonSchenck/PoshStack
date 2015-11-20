@@ -11,13 +11,13 @@ Description
 ############################################################################################>
 
 
-function Get-Connection {
+function Get-Provider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -Account parameter"),
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-	$Connection = Get-OpenStackComputeProvider -Account $Account
+	$Provider = Get-OpenStackComputeProvider -Account $Account
 
 	
     if ($RegionOverride){
@@ -31,9 +31,9 @@ function Get-Connection {
         $Region = $Credentials.Region
     }
 
-    Add-Member -InputObject $Connection -MemberType NoteProperty -Name Region -Value $Provider.Region
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Provider.Region
 
-	Return $Connection
+	Return $Provider
 
 }
 
@@ -82,7 +82,7 @@ function Add-OpenStackComputeServerVolume {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -145,7 +145,7 @@ function Set-OpenStackComputeServerAdministratorPassword {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -202,7 +202,7 @@ function New-OpenStackComputeServerImage {
         [Parameter (Mandatory=$False)][string]    $RegionOverride
         )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING
     Write-Debug -Message "New-OpenStackComputeServerImage"        
@@ -270,7 +270,7 @@ function Get-OpenStackComputeServerVolumeDetail {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Get-OpenStackComputeServerVolumeDetail"
@@ -322,7 +322,7 @@ function Get-OpenStackComputeServerAddress {
         [Parameter (Mandatory=$False)][string] $ServerId
     )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Get-OpenStackComputeServerAddress"          
@@ -393,7 +393,7 @@ function Update-OpenStackComputeServer {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $null
     )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Update-OpenStackComputeServer"          
@@ -475,7 +475,7 @@ function Get-OpenStackComputeServerFlavor {
         [Parameter (Mandatory=$False)][switch] $Details
     )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -581,7 +581,7 @@ function Get-OpenStackComputeServerImage {
         [Parameter (Mandatory=$False)][switch] $Details
     )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -701,7 +701,7 @@ function Get-OpenStackComputeServer {
         [Parameter (Mandatory=$False)][switch] $Details
     ) 
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -833,7 +833,7 @@ function Get-OpenStackComputeServerVolume {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING             
     Write-Debug -Message "Account.: $Account"
@@ -887,7 +887,7 @@ function New-OpenStackComputeServer {
         [Parameter(Mandatory=$false)][string]$RegionOverride = $Null
     )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING
     Write-Debug -Message "New-OpenStackComputeServer"        
@@ -975,7 +975,7 @@ function Remove-OpenStackComputeServer {
         [Parameter(Mandatory=$false)][string]$RegionOverride
         )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING             
     Write-Debug -Message "ServerId: $ServerId"
@@ -1025,7 +1025,7 @@ function Restart-OpenStackComputeServer {
         [Parameter(Mandatory=$False)][string]$RegionOverride
         )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING             
     Write-Debug -Message "ServerId..: $ServerId"
@@ -1088,7 +1088,7 @@ function Initialize-OpenStackComputeServer {
         [Parameter(Mandatory=$False)][string] $RegionOverride
         )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Initialize-OpenStackComputeServer"          
@@ -1179,7 +1179,7 @@ function Resize-OpenStackComputeServer {
         [Parameter(Mandatory=$False)][string]$RegionOverride
         )
 
-	$Provider = Get-Connection -Account $Account -RegionOverride $RegionOverride
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Resize-OpenStackComputeServer"          
