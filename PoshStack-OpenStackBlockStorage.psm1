@@ -29,7 +29,7 @@ function Get-Provider {
         $Region = $Credentials.Region
     }
 
-    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Provider.Region
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Region
 
 	Return $Provider
 
