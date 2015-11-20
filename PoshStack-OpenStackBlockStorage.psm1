@@ -10,6 +10,31 @@ Description
 
 ############################################################################################>
 
+function Get-Provider {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account with -Account parameter"),
+		[Parameter (Mandatory=$False)][string] $RegionOverride
+        )
+
+	$Provider = Get-OpenStackBlockStorageProvider -Account $Account
+		
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Region
+
+	Return $Provider
+
+}
+
 function Get-OpenStackBlockStorageProvider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account with -Account parameter")
@@ -56,20 +81,9 @@ function New-OpenStackBlockStorageSnapshot {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "New-OpenStackBlockStorageSnapshot"
@@ -80,7 +94,7 @@ function New-OpenStackBlockStorageSnapshot {
         Write-Debug -Message "DisplayName.......: $DisplayName" 
         Write-Debug -Message "DisplayDescription: $DisplayDescription" 
 
-        $OpenStackBlockStorageProvider.CreateSnapshot($VolumeId, $Force, $DisplayName, $DisplayDescription, $RegionOverride, $null)
+        $Provider.CreateSnapshot($VolumeId, $Force, $DisplayName, $DisplayDescription, $Provider.Region, $null)
 
 
     }
@@ -134,20 +148,9 @@ function New-OpenStackBlockStorageVolume {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account 
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    } 
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "New-OpenStackBlockStorageVolume"
@@ -158,7 +161,7 @@ function New-OpenStackBlockStorageVolume {
         Write-Debug -Message "VolumeType........: $VolumeType" 
         Write-Debug -Message "Region............: $Region" 
 
-        $OpenStackBlockStorageProvider.CreateVolume($Size, $DisplayDescription, $DisplayName, $SnapshotId, $VolumeType, $Region, $Null)
+        $Provider.CreateVolume($Size, $DisplayDescription, $DisplayName, $SnapshotId, $VolumeType, $Provider.Region, $Null)
 
     }
     catch {
@@ -210,27 +213,16 @@ function Remove-OpenStackBlockStorageSnapshot {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Remove-OpenStackBlockStorageSnapshot"
         Write-Debug -Message "SnapshotId....: $SnapshotId" 
         Write-Debug -Message "RegionOverride: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.DeleteSnapshot($SnapshotId, $Region, $null)
+        $Provider.DeleteSnapshot($SnapshotId, $Provider.Region, $null)
 
     }
     catch {
@@ -271,27 +263,16 @@ function Remove-OpenStackBlockStorageVolume {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Remove-OpenStackBlockStorageVolume"
         Write-Debug -Message "VolumeId......: $VolumeId" 
         Write-Debug -Message "RegionOverride: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.DeleteVolume($VolumeId, $Region, $Null)
+        $Provider.DeleteVolume($VolumeId, $Provider.Region, $Null)
 
     }
     catch {
@@ -332,27 +313,16 @@ function Get-OpenStackBlockStorageVolumeTypeInfo {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackBlockStorageVolumeTypeInfo"
         Write-Debug -Message "VolumeTypeId..: $VolumeTypeId" 
         Write-Debug -Message "RegionOverride: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.DescribeVolumeType($VolumeTypeId, $Region, $Null)
+        $Provider.DescribeVolumeType($VolumeTypeId, $Provider.Region, $Null)
 
     }
     catch {
@@ -391,27 +361,16 @@ function Get-OpenStackBlockStorageSnapshots {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackBlockStorageSnapshots"
         Write-Debug -Message "Account...........: $Account" 
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.ListSnapshots($RegionOverride, $Null)
+        $Provider.ListSnapshots($Provider.Region, $Null)
 
     }
     catch {
@@ -449,20 +408,9 @@ function Get-OpenStackBlockStorageVolume {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackBlockStorageVolume"
@@ -471,9 +419,9 @@ function Get-OpenStackBlockStorageVolume {
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
 
         if ([string]::IsNullOrEmpty($VolumeId)) {
-            $OpenStackBlockStorageProvider.ListVolumes($Region, $Null)
+            $Provider.ListVolumes($Provider.Region, $Null)
         } else {
-            $OpenStackBlockStorageProvider.ShowVolume($VolumeId, $Region, $Null)
+            $Provider.ShowVolume($VolumeId, $Provider.Region, $Null)
         }
 
     }
@@ -516,20 +464,9 @@ function Watch-OpenStackBlockStorageVolumeAvailable {
         [Parameter (Mandatory=$False)][string]   $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Watch-OpenStackBlockStorageVolumeAvailable"
@@ -539,7 +476,7 @@ function Watch-OpenStackBlockStorageVolumeAvailable {
         Write-Debug -Message "RefreshDelay......: $RefreshDelay"
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.WaitForVolumeAvailable($VolumeId, $RefreshCount, $RefreshDelay, $Region, $Null)
+        $Provider.WaitForVolumeAvailable($VolumeId, $RefreshCount, $RefreshDelay, $Provider.Region, $Null)
 
     }
     catch {
@@ -585,20 +522,9 @@ function Get-OpenStackBlockStorageSnapshot {
         [Parameter (Mandatory=$False)][string]   $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackBlockStorageSnapshot"
@@ -606,7 +532,7 @@ function Get-OpenStackBlockStorageSnapshot {
         Write-Debug -Message "SnapshotId........: $SnapshotId" 
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.ShowSnapshot($SnapshotId, $Region, $Null)
+        $Provider.ShowSnapshot($SnapshotId, $Provider.Region, $Null)
 
     }
     catch {
@@ -645,27 +571,16 @@ function Get-OpenStackBlockStorageVolumeType {
         [Parameter (Mandatory=$False)][string]   $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackBlockStorageVolumeType"
         Write-Debug -Message "Account...........: $Account"
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.ListVolumeTypes($Region, $null)
+        $Provider.ListVolumeTypes($Provider.Region, $null)
 
     }
     catch {
@@ -704,20 +619,9 @@ function Watch-OpenStackBlockStorageSnapshotAvailable {
         [Parameter (Mandatory=$False)][string]   $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Watch-OpenStackBlockStorageSnapshotAvailable"
@@ -727,7 +631,7 @@ function Watch-OpenStackBlockStorageSnapshotAvailable {
         Write-Debug -Message "RefreshDelay......: $RefreshDelay"
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.WaitForSnapshotAvailable($SnapshotId, $RefreshCount, $RefreshDelay, $Region, $Null)
+        $Provider.WaitForSnapshotAvailable($SnapshotId, $RefreshCount, $RefreshDelay, $Provider.Region, $Null)
 
     }
     catch {
@@ -775,20 +679,9 @@ function Watch-OpenStackBlockStorageVolumeDeleted {
         [Parameter (Mandatory=$False)][string]   $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Watch-OpenStackBlockStorageVolumeDeleted"
@@ -798,8 +691,7 @@ function Watch-OpenStackBlockStorageVolumeDeleted {
         Write-Debug -Message "RefreshDelay......: $RefreshDelay"
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
         
-
-        $OpenStackBlockStorageProvider.WaitForVolumeDeleted($VolumeId, $RefreshCount, $RefreshDelay, $Region, $Null)
+        $Provider.WaitForVolumeDeleted($VolumeId, $RefreshCount, $RefreshDelay, $Provider.Region, $Null)
 
     }
     catch {
@@ -849,20 +741,9 @@ function Watch-OpenStackBlockStorageVolumeState {
         [Parameter (Mandatory=$False)][string]   $RegionOverride = $Null
     )
 
-    $OpenStackBlockStorageProvider = Get-OpenStackBlockStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Watch-OpenStackBlockStorageVolumeState"
@@ -874,7 +755,7 @@ function Watch-OpenStackBlockStorageVolumeState {
         Write-Debug -Message "RefreshDelay......: $RefreshDelay"
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
 
-        $OpenStackBlockStorageProvider.WaitForVolumeState($VolumeId, $ExpectedState, $ErrorStates, $RefreshCount, $RefreshDelay, $Region, $Null)
+        $Provider.WaitForVolumeState($VolumeId, $ExpectedState, $ErrorStates, $RefreshCount, $RefreshDelay, $Provider.Region, $Null)
 
     }
     catch {
