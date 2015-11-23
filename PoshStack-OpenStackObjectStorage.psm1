@@ -10,6 +10,32 @@ Description
 
 ############################################################################################>
 
+function Get-Provider {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -Account parameter"),
+		[Parameter (Mandatory=$False)][string] $RegionOverride = $Null
+        )
+
+	$Provider = Get-OpenStackObjectStorageProvider -Account $Account
+
+	
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Region
+
+	Return $Provider
+
+}
+
 function Get-OpenStackObjectStorageProvider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -Account parameter")
@@ -46,7 +72,7 @@ function Get-OpenStackObjectStorageProvider {
 
 #CopyStream
 
-#DeleteObject **TODO**
+#DeleteObject
 function Remove-OpenStackObjectStorageObject {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -Account parameter"),
@@ -58,20 +84,9 @@ function Remove-OpenStackObjectStorageObject {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Remove-OpenStackObjectStorageObject"
@@ -83,7 +98,7 @@ function Remove-OpenStackObjectStorageObject {
         Write-Debug -Message "DeleteSegments: $DeleteSegments"
         Write-Debug -Message "UseInternalUrl: $UseInternalUrl" 
 
-        $OpenStackObjectStorageProvider.DeleteObject($ContainerName, $ObjectName, $Headers, $DeleteSegments, $Region, $UseInternalUrl, $Null)
+        $Provider.DeleteObject($ContainerName, $ObjectName, $Headers, $DeleteSegments, $Provider.Region, $UseInternalUrl, $Null)
 
     }
     catch {
@@ -139,20 +154,9 @@ function Remove-OpenStackObjectStorageObjects {
         [Parameter (Mandatory=$False)][string]    $RegionOverride = $Null
     )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Remove-OpenStackObjectStorageObjects"
@@ -167,52 +171,19 @@ function Remove-OpenStackObjectStorageObjects {
         # e.g. @{"Container1" = @("Object1", "Object2", "Object4"); "Container2" = @("Object1", "ObjectX")}
         # In this example, three objects are deleted from container "Container1", and two objects are deleted from container "Container2"
 
-        Write-Host "Create IEnumerable array"
-        
         $ItemsArray = New-Object 'System.Collections.Generic.List[hashtable]'
         $hdr = New-Object 'System.Collections.Generic.Dictionary[String,String]'
         
-        Write-Host "ItemsArray is type:"
-        Write-Host $ItemsArray.GetType()
-
-        
-        
-        Write-Host "Add items to array"
-
         foreach($Item in $ItemsToDelete){
             $ContainerName
             $Item
             $ThisItem = New-Object 'System.Collections.Generic.Dictionary[String,String]'
 
-            #$ThisItem += $ContainerName
-            #$ThisItem += $Item
-            Write-Host "Add container name to ThisItem"
-            Write-Host $ThisItem.GetType()
-            #$ThisArray.Add($ThisItem)
-            #$ItemsArray.Add($ThisItem)
-            Write-Host "Adding ThisItem to ItemsArray"
-            #$ItemsArray.add($ContainerName, $Item)
-            #$ItemsArray.Add($ThisItem)
             $ThisItem.Add($ContainerName, $Item)
-            #$ThisArray += $ThisItem
-            Write-Host "Added ThisItem to ItemsArray"
             $ItemsArray.Add($ThisItem)
         }
-        Write-Host "Itemsarray:"
-        #$ItemsArray
-        Write-Host $ItemsArray.Count
-        Write-Host "ItemsArray is type:"
-        Write-Host $ItemsArray.GetType()
-        Write-Host "Headers is type:"
-        Write-Host $Headers.GetType()
-        Write-Host "Region is type:"
-        Write-Host $Region.GetType()
-        Write-Host "UseInternalUrl is type:"
-        Write-Host $UseInternalUrl.GetType()
-        Write-Host "Region $Region"
-        Write-Host $OpenStackId
 
-        $OpenStackObjectStorageProvider.BulkDelete($ItemsArray, $Headers, $Region, $UseInternalUrl, $Null)
+        $Provider.BulkDelete($ItemsArray, $Headers, $Provider.Region, $UseInternalUrl, $Null)
 
     }
     catch {
@@ -275,20 +246,9 @@ function New-OpenStackObjectStorageContainer {
         [Parameter (Mandatory=$False)][string]    $RegionOverride
         )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "New-OpenStackObjectStorageContainer"
@@ -298,7 +258,7 @@ function New-OpenStackObjectStorageContainer {
         Write-Debug -Message "UseInternalUrl: $UseInternalUrl" 
 
 
-        return $OpenStackObjectStorageProvider.CreateContainer($ContainerName, $Headers, $Region, $UseInternalUrl, $Null)
+        return $Provider.CreateContainer($ContainerName, $Headers, $Provider.Region, $UseInternalUrl, $Null)
 
     }
     catch {
@@ -367,20 +327,9 @@ function Add-OpenStackObjectStorageObjectFromFile {
         [Parameter (Mandatory=$False)][string]    $RegionOverride
         )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Add-OpenStackObjectStorageObjectFromFile"
@@ -396,7 +345,7 @@ function Add-OpenStackObjectStorageObjectFromFile {
         Write-Debug -Message "Headers.......: $Headers"
 
         
-        $OpenStackObjectStorageProvider.CreateObjectFromFile($ContainerName, $FilePath, $ObjectName, $ContentType, $ChunkSize, $Headers, $Region, $null, $UseInternalUrl, $Null)
+        $Provider.CreateObjectFromFile($ContainerName, $FilePath, $ObjectName, $ContentType, $ChunkSize, $Headers, $Provider.Region, $null, $UseInternalUrl, $Null)
 
     }
     catch {
@@ -459,20 +408,9 @@ function Remove-OpenStackObjectStorageContainer {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Remove-OpenStackObjectStorageContainer"
@@ -484,7 +422,7 @@ function Remove-OpenStackObjectStorageContainer {
         Write-Debug -Message "DeleteObjects.: $DeleteObjects"
 
         
-        $OpenStackObjectStorageProvider.DeleteContainer($ContainerName, $DeleteObjects, $Region, $UseInternalUrl, $Null)
+        $Provider.DeleteContainer($ContainerName, $DeleteObjects, $Provider.Region, $UseInternalUrl, $Null)
 
     }
     catch {
@@ -551,20 +489,9 @@ function Enable-OpenStackObjectStorageContainerCDN {
         [Parameter (Mandatory=$False)][string]    $RegionOverride
         )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Enable-OpenStackObjectStorageContainerCDN"
@@ -574,7 +501,7 @@ function Enable-OpenStackObjectStorageContainerCDN {
         Write-Debug -Message "LogRetention..: $LogRetention" 
 
 
-        return $OpenStackObjectStorageProvider.EnableCDNOnContainer($ContainerName, $LogRetention, $Region, $Null)
+        return $Provider.EnableCDNOnContainer($ContainerName, $LogRetention, $Provider.Region, $Null)
 
     }
     catch {
@@ -657,10 +584,6 @@ function Get-OpenStackObjectStorageHeader {
 function Get-OpenStackObjectStorageContainerMetadata {
 }
 
-#GetObject **TODO**
-function Get-OpenStackObjectStorageObject {
-}
-
 #GetObjectHeaders **TODO**
 function Get-OpenStackObjectStorageObjectHeader {
 }
@@ -685,20 +608,9 @@ function Copy-OpenStackObjectStorageObjectToFile {
         [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False
     )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Copy-OpenStackObjectStorageObjectToFile"
@@ -714,8 +626,7 @@ function Copy-OpenStackObjectStorageObjectToFile {
         Write-Debug -Message "ProgressUpdated: $ProgressUpdated" 
         Write-Debug -Message "UseInternalUrl.: $UseInternalUrl" 
 
-        $OpenStackObjectStorageProvider.GetObjectSaveToFile($ContainerName, $SaveDirectory, $ObjectName, $FileName, $ChunkSize, $Headers, $Region, $VerifyETag, $ProgressUpdated, $UseInternalUrl, $Null)
-        #$OpenStackObjectStorageProvider.GetObjectSaveToFile("Container1", "C:\Temp", "iChats", $Null, 65536, $Null, "ORD", $Null, $null, $null, $OpenStackId)
+        $Provider.GetObjectSaveToFile($ContainerName, $SaveDirectory, $ObjectName, $FileName, $ChunkSize, $Headers, $Provider.Region, $VerifyETag, $ProgressUpdated, $UseInternalUrl, $Null)
 
     }
     catch {
@@ -781,7 +692,7 @@ function Copy-OpenStackObjectStorageObjectToFile {
 function Get-OpenStackObjectStorageContainer {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -Account parameter"),
-        [Parameter (Mandatory=$False)][int]    $Limit = 10000,
+        [Parameter (Mandatory=$False)][int]    $Limit = 100,
         [Parameter (Mandatory=$False)][string] $Marker = $null,
         [Parameter (Mandatory=$False)][string] $MarkerEnd = $Null,
         [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
@@ -789,20 +700,9 @@ function Get-OpenStackObjectStorageContainer {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackObjectStorageContainer"
@@ -813,9 +713,9 @@ function Get-OpenStackObjectStorageContainer {
         Write-Debug -Message "UseInternalUrl: $UseInternalUrl" 
         
         If ($CDN) {
-            Return $OpenStackObjectStorageProvider.ListCDNContainers($Limit, $Marker, $MarkerEnd, $True, $Region, $Null)
+            Return $Provider.ListCDNContainers($Limit, $Marker, $MarkerEnd, $True, $Provider.Region, $Null)
         } else {
-            Return $OpenStackObjectStorageProvider.ListContainers($Limit, $Marker, $MarkerEnd, $Region, $UseInternalUrl, $Null)
+            Return $Provider.ListContainers($Limit, $Marker, $MarkerEnd, $Provider.Region, $UseInternalUrl, $Null)
         }
 
     }
@@ -874,21 +774,9 @@ function Get-OpenStackObjectStorageObject {
         [Parameter (Mandatory=$False)][string] $RegionOverride = $Null
     )
 
-    $OpenStackObjectStorageProvider = Get-OpenStackObjectStorageProvider -Account $Account
-
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackObjectStorageObjects"
@@ -900,9 +788,9 @@ function Get-OpenStackObjectStorageObject {
         Write-Debug -Message "RegionOverride: $RegionOverride" 
         Write-Debug -Message "UseInternalUrl: $UseInternalUrl" 
         
-        $ListOfObjects = $OpenStackObjectStorageProvider.ListObjects($ContainerName, $Limit, $Marker, $MarkerEnd, $Prefix, $Region, $UseInternalUrl, $Null)
+        $ListOfObjects = $Provider.ListObjects($ContainerName, $Limit, $Marker, $MarkerEnd, $Prefix, $Provider.Region, $UseInternalUrl, $Null)
         foreach ($obj in $ListOfObjects) {
-            Add-Member -InputObject $obj -MemberType NoteProperty -Name Region -Value $Region
+            Add-Member -InputObject $obj -MemberType NoteProperty -Name Region -Value $Provider.Region
             Add-Member -InputObject $obj -MemberType NoteProperty -Name Container -Value $ContainerName
         }
 

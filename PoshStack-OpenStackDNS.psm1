@@ -10,6 +10,33 @@ Description
 
 ############################################################################################>
 
+function Get-Provider {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account with -Account parameter"),
+        [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
+		[Parameter (Mandatory=$False)][string] $RegionOverride
+        )
+
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+	$Provider = Get-OpenStackDNSProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Region
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name UserInternalUrl -Value $UseInternalUrl
+
+	Return $Provider
+
+}
+
 function Get-OpenStackDNSProvider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
@@ -70,21 +97,7 @@ function Add-OpenStackDNSPtrRecord {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -101,9 +114,9 @@ function Add-OpenStackDNSPtrRecord {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if($WaitForTask) {
-            $DNSServiceProvider.AddPtrRecordsAsync($ServiceName, $DeviceResourceURI, $DnsDomainRecordConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.AddPtrRecordsAsync($ServiceName, $DeviceResourceURI, $DnsDomainRecordConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.AddPtrRecordsAsync($ServiceName, $DeviceResourceURI, $DnsDomainRecordConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.AddPtrRecordsAsync($ServiceName, $DeviceResourceURI, $DnsDomainRecordConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {
@@ -158,21 +171,7 @@ function Add-OpenStackDNSRecord {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -188,7 +187,7 @@ function Add-OpenStackDNSRecord {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if($WaitForTask) {
-            $DNSServiceProvider.AddRecordsAsync($DomainId, $DNSDomainRecordConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.AddRecordsAsync($DomainId, $DNSDomainRecordConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
             $DNSServiceProvider.AddRecordsAsync($DomainId, $DNSDomainRecordConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
@@ -247,21 +246,7 @@ function Copy-OpenStackDNSDomain {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -281,9 +266,9 @@ function Copy-OpenStackDNSDomain {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if($WaitForTask) {
-            $DNSServiceProvider.CloneDomainAsync($DomainId, $DomainName, $CloneSubdomains, $ModifyRecordData, $ModifyEmailAddress, $ModifyComment, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.CloneDomainAsync($DomainId, $DomainName, $CloneSubdomains, $ModifyRecordData, $ModifyEmailAddress, $ModifyComment, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.CloneDomainAsync($DomainId, $DomainName, $CloneSubdomains, $ModifyRecordData, $ModifyEmailAddress, $ModifyComment, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.CloneDomainAsync($DomainId, $DomainName, $CloneSubdomains, $ModifyRecordData, $ModifyEmailAddress, $ModifyComment, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {
@@ -346,21 +331,7 @@ function New-OpenStackDNSDomain {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -375,9 +346,9 @@ function New-OpenStackDNSDomain {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if($WaitForTask) {
-            $DNSServiceProvider.CreateDomainsAsync($DNSConfiguration, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.CreateDomainsAsync($DNSConfiguration, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.CreateDomainsAsync($DNSConfiguration, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.CreateDomainsAsync($DNSConfiguration, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
 
     }
@@ -427,21 +398,7 @@ function Export-OpenStackDNSDomain {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -456,9 +413,9 @@ function Export-OpenStackDNSDomain {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if($WaitForTask) {
-            $DNSServiceProvider.ExportDomainAsync($DomainId, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.ExportDomainAsync($DomainId, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.ExportDomainAsync($DomainId, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.ExportDomainAsync($DomainId, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {
@@ -506,21 +463,7 @@ function Get-OpenStackDNSJobStatus {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -534,7 +477,7 @@ function Get-OpenStackDNSJobStatus {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.GetJobStatusAsync($DNSJob, $Details, $CancellationToken).Result
+        $Provider.GetJobStatusAsync($DNSJob, $Details, $CancellationToken).Result
     }
     catch {
         Invoke-Exception($_.Exception)
@@ -581,21 +524,7 @@ function Get-OpenStackDNSDomainChange {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -609,7 +538,7 @@ function Get-OpenStackDNSDomainChange {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListDomainChangesAsync($DomainID, $Since, $CancellationToken).Result
+        $Provider.ListDomainChangesAsync($DomainID, $Since, $CancellationToken).Result
     }
     catch {
         Invoke-Exception($_.Exception)
@@ -657,21 +586,7 @@ function Get-OpenStackDNSDomainDetail {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -686,7 +601,7 @@ function Get-OpenStackDNSDomainDetail {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListDomainDetailsAsync($DomainID, $ShowRecords, $ShowSubdomains, $CancellationToken).Result
+        $Provider.ListDomainDetailsAsync($DomainID, $ShowRecords, $ShowSubdomains, $CancellationToken).Result
 
     }
     catch {
@@ -738,21 +653,7 @@ function Get-OpenStackDNSDomain {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -767,7 +668,7 @@ function Get-OpenStackDNSDomain {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListDomainsAsync($DomainName, $ListOffset, $ListLimit, $CancellationToken).Result
+        $Provider.ListDomainsAsync($DomainName, $ListOffset, $ListLimit, $CancellationToken).Result
 
     }
     catch {
@@ -817,21 +718,7 @@ function Get-OpenStackDNSLimit {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -845,9 +732,9 @@ function Get-OpenStackDNSLimit {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if (![string]::IsNullOrEmpty($LimitType)) {
-            $DNSServiceProvider.ListLimitsAsync($LimitType, $CancellationToken).Result
+            $Provider.ListLimitsAsync($LimitType, $CancellationToken).Result
         } else {
-            $DNSServiceProvider.ListLimitsAsync($CancellationToken).Result
+            $Provider.ListLimitsAsync($CancellationToken).Result
         }
     }
     catch {
@@ -890,21 +777,7 @@ function Get-OpenStackDNSLimitType {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -916,7 +789,7 @@ function Get-OpenStackDNSLimitType {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListLimitTypesAsync($CancellationToken).Result
+        $Provider.ListLimitTypesAsync($CancellationToken).Result
 
     }
     catch {
@@ -959,21 +832,7 @@ function Get-OpenStackDNSPtrRecordDetail {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -988,7 +847,7 @@ function Get-OpenStackDNSPtrRecordDetail {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListPtrRecordDetailsAsync($ServiceName, $DeviceResourceURI, $RecordID, $CancellationToken).Result
+        $Provider.ListPtrRecordDetailsAsync($ServiceName, $DeviceResourceURI, $RecordID, $CancellationToken).Result
 
     }
     catch {
@@ -1041,21 +900,7 @@ function Get-OpenStackDNSPtrRecord {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1071,7 +916,7 @@ function Get-OpenStackDNSPtrRecord {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListPtrRecordsAsync($ServiceName, $DeviceResourceURI, $ListOffset, $ListLimit, $CancellationToken).Result
+        $Provider.ListPtrRecordsAsync($ServiceName, $DeviceResourceURI, $ListOffset, $ListLimit, $CancellationToken).Result
 
     }
     catch {
@@ -1128,21 +973,7 @@ function Get-OpenStackDNSRecordDetail {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1156,7 +987,7 @@ function Get-OpenStackDNSRecordDetail {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListRecordDetailsAsync($DomainId, $RecordId, $CancellationToken).Result
+        $Provider.ListRecordDetailsAsync($DomainId, $RecordId, $CancellationToken).Result
 
     }
     catch {
@@ -1208,21 +1039,7 @@ function Get-OpenStackDNSRecord {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1240,7 +1057,7 @@ function Get-OpenStackDNSRecord {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListRecordsAsync($DomainId, $RecordType, $RecordName, $RecordData, $ListOffset, $ListLimit, $CancellationToken).Result
+        $Provider.ListRecordsAsync($DomainId, $RecordType, $RecordName, $RecordData, $ListOffset, $ListLimit, $CancellationToken).Result
 
     }
     catch {
@@ -1301,21 +1118,7 @@ function Get-OpenStackDNSSubdomain {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1330,7 +1133,7 @@ function Get-OpenStackDNSSubdomain {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $DNSServiceProvider.ListSubdomainsAsync($DomainId, $ListOffset, $ListLimit, $CancellationToken).Result
+        $Provider.ListSubdomainsAsync($DomainId, $ListOffset, $ListLimit, $CancellationToken).Result
 
     }
     catch {
@@ -1382,21 +1185,7 @@ function Remove-OpenStackDNSDomain {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1413,9 +1202,9 @@ function Remove-OpenStackDNSDomain {
 
 
         if($WaitForTask) {
-            $DNSServiceProvider.RemoveDomainsAsync($ListOfDomainIDs, $DeleteSubdomain, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.RemoveDomainsAsync($ListOfDomainIDs, $DeleteSubdomain, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.RemoveDomainsAsync($ListOfDomainIDs, $DeleteSubdomain, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.RemoveDomainsAsync($ListOfDomainIDs, $DeleteSubdomain, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {
@@ -1468,21 +1257,7 @@ function Remove-OpenStackDNSPtrRecord {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1498,16 +1273,10 @@ function Remove-OpenStackDNSPtrRecord {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-
-#            Uri serviceURI = new Uri("uristring");
-#            System.Net.IPAddress ip = new System.Net.IPAddress(0x2414188f);
-#           DnsJob remove = await provider.RemovePtrRecordsAsync("servicename", serviceURI, ip, AsyncCompletionOption.RequestCompleted, CancellationToken.None, null);
-
-
         if($WaitForTask) {
-            $DNSServiceProvider.RemovePtrRecordsAsync($ServiceName, $ServiceURI, $IPAddress, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.RemovePtrRecordsAsync($ServiceName, $ServiceURI, $IPAddress, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.RemovePtrRecordsAsync($ServiceName, $ServiceURI, $IPAddress, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.RemovePtrRecordsAsync($ServiceName, $ServiceURI, $IPAddress, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {
@@ -1562,21 +1331,7 @@ function Remove-OpenStackDNSRecord {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1593,9 +1348,9 @@ function Remove-OpenStackDNSRecord {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if($WaitForTask) {
-            $DNSServiceProvider.RemoveRecordsAsync($DomainId, $RecordIdList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.RemoveRecordsAsync($DomainId, $RecordIdList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.RemoveRecordsAsync($DomainId, $RecordIdList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.RemoveRecordsAsync($DomainId, $RecordIdList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {
@@ -1645,21 +1400,7 @@ function Update-OpenStackDNSDomain {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1675,9 +1416,9 @@ function Update-OpenStackDNSDomain {
 
 
         if($WaitForTask) {
-            $DNSServiceProvider.UpdateDomainsAsync($DNSDomainUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.UpdateDomainsAsync($DNSDomainUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.UpdateDomainsAsync($DNSDomainUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.UpdateDomainsAsync($DNSDomainUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {
@@ -1727,21 +1468,7 @@ function Update-OpenStackDNSPtrRecord {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1757,9 +1484,9 @@ function Update-OpenStackDNSPtrRecord {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if($WaitForTask) {
-            $DNSServiceProvider.UpdatePtrRecordsAsync($ServiceName, $DeviceResourceUri, $DNSDomainRecordUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.UpdatePtrRecordsAsync($ServiceName, $DeviceResourceUri, $DNSDomainRecordUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.UpdatePtrRecordsAsync($ServiceName, $DeviceResourceUri, $DNSDomainRecordUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.UpdatePtrRecordsAsync($ServiceName, $DeviceResourceUri, $DNSDomainRecordUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {
@@ -1815,21 +1542,7 @@ function Update-OpenStackDNSRecord {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $DNSServiceProvider = Get-OpenStackDnsProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
@@ -1846,9 +1559,9 @@ function Update-OpenStackDNSRecord {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         if($WaitForTask) {
-            $DNSServiceProvider.UpdateRecordsAsync($DomainId, $DNSDomainRecordUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.UpdateRecordsAsync($DomainId, $DNSDomainRecordUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $DNSServiceProvider.UpdateRecordsAsync($DomainId, $DNSDomainRecordUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.UpdateRecordsAsync($DomainId, $DNSDomainRecordUpdateConfigurationList, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
     }
     catch {

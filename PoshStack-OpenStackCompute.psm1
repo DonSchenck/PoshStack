@@ -11,6 +11,32 @@ Description
 ############################################################################################>
 
 
+function Get-Provider {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -Account parameter"),
+        [Parameter (Mandatory=$False)][string] $RegionOverride
+        )
+
+	$Provider = Get-OpenStackComputeProvider -Account $Account
+
+	
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Region
+
+	Return $Provider
+
+}
+
 function Get-OpenStackComputeProvider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account by using the -Account parameter")
@@ -56,20 +82,9 @@ function Add-OpenStackComputeServerVolume {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Add-OpenStackComputeServerVolume"
@@ -79,7 +94,7 @@ function Add-OpenStackComputeServerVolume {
         Write-Debug -Message "VolumeId......: $VolumeId" 
         Write-Debug -Message "StorageDevice.: $StorageDevice" 
 
-        $OpenStackComputeServersProvider.AttachServerVolume($ServerId, $VolumeId, $StorageDevice, $Region, $Null)
+        $Provider.AttachServerVolume($ServerId, $VolumeId, $StorageDevice, $Provider.Region, $Null)
 
     }
     catch {
@@ -130,20 +145,9 @@ function Set-OpenStackComputeServerAdministratorPassword {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Set-OpenStackComputeServerAdministratorPassword"
@@ -152,7 +156,7 @@ function Set-OpenStackComputeServerAdministratorPassword {
         Write-Debug -Message "ServerId......: $ServerId" 
         Write-Debug -Message "Password......: $Password" 
 
-        $OpenStackComputeServersProvider.ChangeAdministratorPassword($ServerId, $Password, $Region, $Null)
+        $Provider.ChangeAdministratorPassword($ServerId, $Password, $Provider.Region, $Null)
 
     }
     catch {
@@ -198,18 +202,7 @@ function New-OpenStackComputeServerImage {
         [Parameter (Mandatory=$False)][string]    $RegionOverride
         )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING
     Write-Debug -Message "New-OpenStackComputeServerImage"        
@@ -217,10 +210,10 @@ function New-OpenStackComputeServerImage {
     Write-Debug -Message "ServerId..: $ServerId"
     Write-Debug -Message "ImageName.: $ImageName"
     Write-Debug -Message "Metadata..: $Metadata"
-    Write-Debug -Message "Region....: $Region"
+    Write-Debug -Message "Region....: $Provider.Region"
             
     # Create a Server Image
-    $OpenStackComputeServersProvider.CreateImage($ServerId, $ImageName, $Metadata, $Region, $Null)
+    $Provider.CreateImage($ServerId, $ImageName, $Metadata, $Provider.Region, $Null)
 
 <#
  .SYNOPSIS
@@ -277,24 +270,17 @@ function Get-OpenStackComputeServerVolumeDetail {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Get-OpenStackComputeServerVolumeDetail"
     Write-Debug -Message "ServerId.....: $ServerId"
     Write-Debug -Message "VolumeId.....: $VolumeId"
-    Write-Debug -Message "Region.......: $Region"
+    Write-Debug -Message "Region.......: $Provider.Region"
 
             
     # Get the addresses
-    $OpenStackComputeServersProvider.GetServerVolumeDetails($ServerId, $VolumeId, $Region, $Null)
+    $Provider.GetServerVolumeDetails($ServerId, $VolumeId, $Provider.Region, $Null)
 
 
 <#
@@ -336,24 +322,16 @@ function Get-OpenStackComputeServerAddress {
         [Parameter (Mandatory=$False)][string] $ServerId
     )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Get-OpenStackComputeServerAddress"          
     Write-Debug -Message "ServerId.....: $ServerId"
-    Write-Debug -Message "Region.......: $Region"
+    Write-Debug -Message "Region.......: $Provider.Region"
 
             
     # Get the addresses
-    $OpenStackComputeServersProvider.ListAddresses($ServerId, $Region, $Null)
+    $Provider.ListAddresses($ServerId, $Provider.Region, $Null)
 
 
 <#
@@ -407,23 +385,15 @@ function Get-OpenStackComputeServerAddress {
 #UpdateServer
 function Update-OpenStackComputeServer {
     Param(
-        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -account parameter"),
-        [Parameter (Mandatory=$False)][string] $RegionOverride,
-        [Parameter (Mandatory=$False)][string] $ServerId,
-        [Parameter (Mandatory=$False)][string] $ServerName,
-        [Parameter (Mandatory=$False)][string] $AccessIPv4,
-        [Parameter (Mandatory=$False)][string] $AccessIPv6
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify the required OpenStack Account by using the -Account parameter"),
+        [Parameter (Mandatory=$True)] [string] $ServerId = $(throw "Please specify the required Server ID by using the -ServerId parameter"),
+        [Parameter (Mandatory=$False)][string] $ServerName = $null,
+        [Parameter (Mandatory=$False)][string] $AccessIPv4 = $null,
+        [Parameter (Mandatory=$False)][string] $AccessIPv6 = $null,
+        [Parameter (Mandatory=$False)][string] $RegionOverride = $null
     )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Update-OpenStackComputeServer"          
@@ -431,11 +401,20 @@ function Update-OpenStackComputeServer {
     Write-Debug -Message "ServerName...: $ServerName"
     Write-Debug -Message "AccessIPv4...: $AccessIPv4"
     Write-Debug -Message "AccessIPv6...: $AccessIPv6"
-    Write-Debug -Message "Region.......: $Region"
+    Write-Debug -Message "Region.......: $Provider.Region"
 
-            
+
+	# Convert IP address types, handling null values along the way.
+    if (![string]::IsNullOrEmpty($AccessIPv4)) {
+		$ipv4 = [System.Net.IPAddress]$AccessIPv4
+	}
+
+    if (![string]::IsNullOrEmpty($AccessIPv4)) {
+		$ipv6 = [System.Net.IPAddress]$AccessIPv6
+	}
+
     # Update the Server
-    $OpenStackComputeServersProvider.UpdateServer($ServerId, $ServerName, $AccessIPv4, $AccessIPv6, $Region, $Null)
+    $Provider.UpdateServer($ServerId, $ServerName, $ipv4, $ipv6, $Provider.Region, $Null)
 
 
 <#
@@ -465,7 +444,7 @@ function Update-OpenStackComputeServer {
  This parameter will temporarily override the default region set in PoshStack configuration file. 
 
  .EXAMPLE
- PS C:\Users\Administrator> Update-OpenStackComputeServer -Account demo -ServerId "foo" -ServerName "TheNewName"
+ PS C:\Users\Administrator> Update-OpenStackComputeServer -Account demo -ServerId "foo" -ServerName "The New Name"
  This example will rename server "foo" to "TheNewName".
  
  .LINK
@@ -496,53 +475,39 @@ function Get-OpenStackComputeServerFlavor {
         [Parameter (Mandatory=$False)][switch] $Details
     )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-        # Use Region code associated with Account, or was an override provided?
-        if ($RegionOverride) {
-            $Region = $Global:RegionOverride
-        } else {
-            $Region = $Credentials.Region
-        }
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackComputeServerFlavor"   
         Write-Debug -Message "FlavorId......: $FlavorId"  
         Write-Debug -Message "Details.......: $Details"
         Write-Debug -Message "Account.......: $Account" 
-        Write-Debug -Message "Region........: $Region" 
+        Write-Debug -Message "Region........: $Provider.Region" 
         Write-Debug -Message "MinDiskInGB...: $MinDiskInGB" 
         Write-Debug -Message "MinRamInMB....: $MinRamInMB" 
         Write-Debug -Message "MarkerId......: $MarkerId" 
         Write-Debug -Message "Limit.........: $Limit"  
 
         if (![string]::IsNullOrEmpty($FlavorId)) {
-            return $OpenStackComputeServersProvider.GetFlavor($FlavorId, $Region, $null)
+            return $Provider.GetFlavor($FlavorId, $Provider.Region, $null)
         } else {
             # Get the list of Flavors
             if ($Details) {
-                $FlavorList = $OpenStackComputeServersProvider.ListFlavorsWithDetails($MinDiskInGB, $MinRamInMB, $MarkerId, $Limit, $Region, $nul)
+                $FlavorList = $Provider.ListFlavorsWithDetails($MinDiskInGB, $MinRamInMB, $MarkerId, $Limit, $Provider.Region, $nul)
             } else {
-                $FlavorList = $OpenStackComputeServersProvider.ListFlavors($MinDiskInGB, $MinRamInMB, $MarkerId, $Limit, $Region, $null)
+                $FlavorList = $Provider.ListFlavors($MinDiskInGB, $MinRamInMB, $MarkerId, $Limit, $Provider.Region, $null)
             }
-
 
             # Handling empty response indicating that no Flavors exist in the queried data center
             if ($FlavorList.Count -eq 0) {
-                Write-Verbose "No Flavors found in region '$Region'."
+                Write-Verbose "No Flavors found in region '$Provider.Region'."
             }
             elseif($FlavorList.Count -ne 0){
     		    return $FlavorList;
             }
         }
-
-
     }
     catch {
         Invoke-Exception($_.Exception)
@@ -616,20 +581,9 @@ function Get-OpenStackComputeServerImage {
         [Parameter (Mandatory=$False)][switch] $Details
     )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-            # Use Region code associated with Account, or was an override provided?
-            if ($RegionOverride)
-            {
-                $Region = $Global:RegionOverride
-            } else {
-                $Region = $Credentials.Region
-            }
 
             # DEBUGGING             
             Write-Debug -Message "Get-OpenStackComputeServerImage"
@@ -643,27 +597,26 @@ function Get-OpenStackComputeServerImage {
             Write-Debug -Message "MarkerId.........: $MarkerId"
             Write-Debug -Message "Limit............: $Limit"
             Write-Debug -Message "ImageType........: $ImageType"
-            Write-Debug -Message "Region...........: $Region"
+            Write-Debug -Message "Region...........: $Provider.Region"
 
             if ([string]::IsNullOrEmpty($ImageId)) {
                 if ($Details) {
                     Write-Verbose "Getting a detailed list of Server Images"
-                    $ImageList = $OpenStackComputeServersProvider.ListImagesWithDetails($Server, $ImageName, $ImageStatus, $ChangesSince, $MarkerId, $Limit, $ImageType, $Region, $Null)
+                    $ImageList = $Provider.ListImagesWithDetails($Server, $ImageName, $ImageStatus, $ChangesSince, $MarkerId, $Limit, $ImageType, $Provider.Region, $Null)
                 } else {
                     Write-Verbose "Getting a simple list of Server Images"
-                    $ImageList = $OpenStackComputeServersProvider.ListImages($Server, $ImageName, $ImageStatus, $ChangesSince, $MarkerId, $Limit, $ImageType, $Region, $Null)
+                    $ImageList = $Provider.ListImages($Server, $ImageName, $ImageStatus, $ChangesSince, $MarkerId, $Limit, $ImageType, $Provider.Region, $Null)
                 }
-
 
                 # Handling empty response indicating that no servers exist in the queried data center
                 if ($ImageList.Count -eq 0) {
-                    Write-Verbose "No Images found in region '$Region'."
+                    Write-Verbose "No Images found in region '$Provider.Region'."
                 }
                 elseif($ImageList.Count -ne 0){
         		    $ImageList;
                 }
             } else {
-                return $OpenStackComputeServersProvider.GetImage($ImageId, $Region, $Null)
+                return $Provider.GetImage($ImageId, $Provider.Region, $Null)
         }
     }
     catch {
@@ -748,21 +701,9 @@ function Get-OpenStackComputeServer {
         [Parameter (Mandatory=$False)][switch] $Details
     ) 
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
-
-            # Use Region code associated with Account, or was an override provided?
-            if ($RegionOverride)
-            {
-                $Region = $Global:RegionOverride
-            } else {
-                $Region = $Credentials.Region
-            }
 
             # DEBUGGING        
             Write-Debug -Message "Get-OpenStackComputeServer"  
@@ -775,7 +716,7 @@ function Get-OpenStackComputeServer {
             Write-Debug -Message "MarkerId....: $MarkerId"
             Write-Debug -Message "Limit.......: $Limit"
             Write-Debug -Message "ChangesSince: $ChangesSince"
-            Write-Debug -Message "Region......: $Region"
+            Write-Debug -Message "Region......: $Provider.Region"
 
 
 
@@ -783,24 +724,24 @@ function Get-OpenStackComputeServer {
 
                 # Get the list of servers
                 if ($Details) {
-                    $ServerList = $OpenStackComputeServersProvider.ListServersWithDetails($ImageId, $FlavorId, $ServerName, $ServerState, $MarkerId, $Limit, $ChangesSince, $Region, $Null)
+                    $ServerList = $Provider.ListServersWithDetails($ImageId, $FlavorId, $ServerName, $ServerState, $MarkerId, $Limit, $ChangesSince, $Provider.Region, $Null)
                 } else {
-                    $ServerList = $OpenStackComputeServersProvider.ListServersWithDetails($ImageId, $FlavorId, $ServerName, $ServerState, $MarkerId, $Limit, $ChangesSince, $Region, $Null)
+                    $ServerList = $Provider.ListServersWithDetails($ImageId, $FlavorId, $ServerName, $ServerState, $MarkerId, $Limit, $ChangesSince, $Provider.Region, $Null)
                 }
 
 
                 # Handling empty response indicating that no servers exist in the queried data center
                 if ($ServerList.Count -eq 0) {
-                    Write-Verbose "You do not currently have any Cloud Servers provisioned in region '$Region'."
+                    Write-Verbose "You do not currently have any Cloud Servers provisioned in region '$Provider.Region'."
                 }
                 elseif ($ServerList.Count -ne 0) {
                     foreach ($server in $ServerList)
                     {
-                        Add-Member -InputObject $server -MemberType NoteProperty -Name Region -Value $Region
+                        Add-Member -InputObject $server -MemberType NoteProperty -Name Region -Value $Provider.Region.ToUpper()
 
                         Try {
                             $imageId = $server.Image.id
-                            $imageName = Get-OpenStackComputeServerImage -Account $Account -RegionOverride $Region -ImageId $ImageId
+                            $imageName = Get-OpenStackComputeServerImage -Account $Account -RegionOverride $Provider.Region -ImageId $ImageId
                             Add-Member -InputObject $server -MemberType NoteProperty -Name ImageName -Value $imageName.Name
                         } Catch {
                             Add-Member -InputObject $server -MemberType NoteProperty -Name ImageName -Value "Unknown"
@@ -808,7 +749,7 @@ function Get-OpenStackComputeServer {
 
                         Try {
                             $flavorId = $server.Flavor.Id
-                            $flavorName = Get-OpenStackComputeServerFlavor -Account $Account -RegionOverride $Region -FlavorId $flavorId
+                            $flavorName = Get-OpenStackComputeServerFlavor -Account $Account -RegionOverride $Provider.Region -FlavorId $flavorId
                             Add-Member -InputObject $server -MemberType NoteProperty -Name FlavorName -Value $flavorName.Name
                         } Catch {
                             Add-Member -InputObject $server -MemberType NoteProperty -Name FlavorName -Value "Unknown"
@@ -822,7 +763,8 @@ function Get-OpenStackComputeServer {
                 } 
             } else {
                     # When retrieving one and only one server, you always get ALL the details.
-                    return $OpenStackComputeServersProvider.GetDetails($ServerId, $Region, $Null)
+#                    return $OpenStackComputeServersProvider.GetDetails($ServerId, $Provider.Region, $Null)
+                    return $Provider.GetDetails($ServerId, $Provider.Region, $Null)
                 }
             }
         catch {
@@ -891,27 +833,16 @@ function Get-OpenStackComputeServerVolume {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING             
     Write-Debug -Message "Account.: $Account"
     Write-Debug -Message "ServerId: $ServerId"
-    Write-Debug -Message "Region..: $Region"
+    Write-Debug -Message "Region..: $Provider.Region"
 
 
     # Get the list of servers
-    $OpenStackComputeServersProvider.ListServerVolumes($ServerId, $Region, $Null)
+    $Provider.ListServerVolumes($ServerId, $Provider.Region, $Null)
 
 <#
  .SYNOPSIS
@@ -956,18 +887,7 @@ function New-OpenStackComputeServer {
         [Parameter(Mandatory=$false)][string]$RegionOverride = $Null
     )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING
     Write-Debug -Message "New-OpenStackComputeServer"        
@@ -981,11 +901,11 @@ function New-OpenStackComputeServer {
     Write-Debug -Message "AttachToPublicNetwork.: $AttachToPublicNetwork"
     Write-Debug -Message "Networks..............: $Networks"
     Write-Debug -Message "PersonalityFile.......: $PersonalityFile"
-    Write-Debug -Message "Region................: $Region"
+    Write-Debug -Message "Region................: $Provider.Region"
 
             
     # Create a Server
-    $OpenStackComputeServersProvider.CreateServer($ServerName, $ImageId, $FlavorId, $DiskConfig, $Metadata, $null, $AttachToServiceNetwork, $AttachToPublicNetwork, $Networks, $Region, $Null)
+    $Provider.CreateServer($ServerName, $ImageId, $FlavorId, $DiskConfig, $Metadata, $null, $AttachToServiceNetwork, $AttachToPublicNetwork, $Networks, $Provider.Region, $Null)
 
 <#
  .SYNOPSIS
@@ -1055,22 +975,14 @@ function Remove-OpenStackComputeServer {
         [Parameter(Mandatory=$false)][string]$RegionOverride
         )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride)
-    {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING             
     Write-Debug -Message "ServerId: $ServerId"
-    Write-Debug -Message "Region..: $Region"
+    Write-Debug -Message "Region..: $Provider.Region"
           
     # Delete the Server
-    $OpenStackComputeServersProvider.DeleteServer($ServerId, $Region, $Null)
+    $Provider.DeleteServer($ServerId, $Provider.Region, $Null)
 
 <#
  .SYNOPSIS
@@ -1113,25 +1025,16 @@ function Restart-OpenStackComputeServer {
         [Parameter(Mandatory=$False)][string]$RegionOverride
         )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride)
-    {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING             
     Write-Debug -Message "ServerId..: $ServerId"
     Write-Debug -Message "RebootType: $RebootType"
-    Write-Debug -Message "Region....: $Region"
+    Write-Debug -Message "Region....: $Provider.Region"
 
             
     # Reboot the Server
-    $OpenStackComputeServersProvider.RebootServer($ServerId, $RebootType, $Region, $Null)
+    $Provider.RebootServer($ServerId, $RebootType, $Provider.Region, $Null)
 
 <#
  .SYNOPSIS
@@ -1185,15 +1088,7 @@ function Initialize-OpenStackComputeServer {
         [Parameter(Mandatory=$False)][string] $RegionOverride
         )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Initialize-OpenStackComputeServer"          
@@ -1207,11 +1102,11 @@ function Initialize-OpenStackComputeServer {
     Write-Debug -Message "Metadata.....: $Metadata"
     Write-Debug -Message "DiskConfig...: $DiskConfig"
     Write-Debug -Message "Personality..: $Personality"
-    Write-Debug -Message "Region.......: $Region"
+    Write-Debug -Message "Region.......: $Provider.Region"
 
             
     # Delete the Server
-    $OpenStackComputeServersProvider.RebuildServer($ServerId, $ServerName, $ImageId, $FlavorId, $AdminPassword, $AccessIPv4, $AccessIPv6, $Metadata, $DiskConfig, $Personality, $Region, $Null)
+    $Provider.RebuildServer($ServerId, $ServerName, $ImageId, $FlavorId, $AdminPassword, $AccessIPv4, $AccessIPv6, $Metadata, $DiskConfig, $Personality, $Provider.Region, $Null)
 
 <#
  .SYNOPSIS
@@ -1284,15 +1179,7 @@ function Resize-OpenStackComputeServer {
         [Parameter(Mandatory=$False)][string]$RegionOverride
         )
 
-    $OpenStackComputeServersProvider = Get-OpenStackComputeProvider -Account $Account
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     # DEBUGGING   
     Write-Debug -Message "Resize-OpenStackComputeServer"          
@@ -1300,11 +1187,11 @@ function Resize-OpenStackComputeServer {
     Write-Debug -Message "ServerName...: $ServerName"
     Write-Debug -Message "FlavorId.....: $FlavorId"
     Write-Debug -Message "DiskConfig...: $DiskConfig"
-    Write-Debug -Message "Region.......: $Region"
+    Write-Debug -Message "Region.......: $Provider.Region"
 
             
     # Delete the Server
-    $OpenStackComputeServersProvider.ResizeServer($ServerId, $ServerName, $FlavorId, $DiskConfig, $Region, $Null)
+    $Provider.ResizeServer($ServerId, $ServerName, $FlavorId, $DiskConfig, $Provider.Region, $Null)
 
 <#
  .SYNOPSIS
