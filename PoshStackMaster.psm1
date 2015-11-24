@@ -71,7 +71,6 @@ function Get-OpenStackAccount {
     try {
         # Search $ConfigFile file for $account entry and populate temporary $conf with relevant details
         $Global:Credentials = Import-Csv $PoshStackConfigFile | Where-Object {$_.AccountName -eq $Account}
-        
 
         # Raise exception if specified $account is not found in conf file
         if ($Credentials.AccountName -eq $null) {

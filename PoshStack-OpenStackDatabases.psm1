@@ -10,10 +10,35 @@ Description
 
 ############################################################################################>
 
-function Get-OpenStackDatabasesProvider {
+function Script:Get-Provider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
-        [Parameter (Mandatory=$False)][string] $RegionOverride = $(throw "Please specify required Region by using the -RegionOverride parameter")
+        [Parameter (Mandatory=$False)][string] $RegionOverride = $null
+    )
+
+	$Provider = Get-OpenStackDatabasesProvider -Account $Account
+	
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Region
+
+	Return $Provider
+
+}
+
+function Script:Get-OpenStackDatabasesProvider {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
+        [Parameter (Mandatory=$False)][string] $RegionOverride = $null
     )
 
     # The Account comes from the file CloudAccounts.csv
@@ -65,22 +90,7 @@ function Confirm-OpenStackDatabaseRootEnabledStatus {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -93,7 +103,7 @@ function Confirm-OpenStackDatabaseRootEnabledStatus {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         $iid = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
 
-        $ComputeDatabasesProvider.CheckRootEnabledStatusAsync($iid, $CancellationToken).Result
+        $CProvider.CheckRootEnabledStatusAsync($iid, $CancellationToken).Result
 
     }
     catch {
@@ -113,22 +123,7 @@ function New-OpenStackDatabaseBackup {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -148,9 +143,9 @@ function New-OpenStackDatabaseBackup {
 
 
         if($WaitForTask) {
-            $ComputeDatabasesProvider.CreateBackupAsync($BackupConfiguration, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.CreateBackupAsync($BackupConfiguration, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $ComputeDatabasesProvider.CreateBackupAsync($BackupConfiguration, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.CreateBackupAsync($BackupConfiguration, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
 
     }
@@ -202,22 +197,7 @@ function New-OpenStackDatabaseInstance {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -236,9 +216,9 @@ function New-OpenStackDatabaseInstance {
         $dbInstanceConfig = New-Object -Type ([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceConfiguration]) -ArgumentList @($flavorref, $dbVolumeConfig, $InstanceName)
 
         if($WaitForTask) {
-            $ComputeDatabasesProvider.CreateDatabaseInstanceAsync($dbInstanceConfig, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.CreateDatabaseInstanceAsync($dbInstanceConfig, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $ComputeDatabasesProvider.CreateDatabaseInstanceAsync($dbInstanceConfig, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.CreateDatabaseInstanceAsync($dbInstanceConfig, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
 
     }
@@ -293,21 +273,7 @@ function New-OpenStackDatabaseUser {
         [Parameter (Mandatory=$False)] [string]   $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -337,7 +303,7 @@ function New-OpenStackDatabaseUser {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         
 
-        $ComputeDatabasesProvider.CreateUserAsync($dbiid, $userConfiguration, $CancellationToken).Result
+        $Provider.CreateUserAsync($dbiid, $userConfiguration, $CancellationToken).Result
 
     }
     catch {
@@ -390,22 +356,7 @@ function Enable-OpenStackDatabaseRootUser {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -415,11 +366,10 @@ function Enable-OpenStackDatabaseRootUser {
         Write-Debug -Message "InstanceId....: $InstanceId"
         Write-Debug -Message "RegionOverride: $RegionOverride" 
 
-
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         $instanceId = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
 
-        $ComputeDatabasesProvider.EnableRootUserAsync($instanceId, $CancellationToken).Result
+        $Provider.EnableRootUserAsync($instanceId, $CancellationToken).Result
 
     }
     catch {
@@ -466,22 +416,7 @@ function Get-OpenStackDatabaseBackup {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -498,12 +433,12 @@ function Get-OpenStackDatabaseBackup {
         if (![string]::IsNullOrEmpty($InstanceId)) {
         Write-Host "IstanceId"
             $instanceId = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
-            $ComputeDatabasesProvider.ListBackupsForInstanceAsync($instanceId, $CancellationToken).Result
+            $Provider.ListBackupsForInstanceAsync($instanceId, $CancellationToken).Result
         } ElseIf (-Not [string]::IsNullOrEmpty($BackupId)) {
             $backupId = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.BackupId]) $BackupId
-            $ComputeDatabasesProvider.GetBackupAsync($backupId, $CancellationToken).Result
+            $Provider.GetBackupAsync($backupId, $CancellationToken).Result
         } Else {
-            $ComputeDatabasesProvider.ListBackupsAsync($CancellationToken).Result
+            $Provider.ListBackupsAsync($CancellationToken).Result
         }
     }
     catch {
@@ -548,22 +483,7 @@ function Get-OpenStackDatabase {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -580,7 +500,7 @@ function Get-OpenStackDatabase {
         $iid = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
         $mkr = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseName]) $Marker
 
-        $ComputeDatabasesProvider.ListDatabasesAsync($iid, $mkr, $Limit, $CancellationToken).Result
+        $Provider.ListDatabasesAsync($iid, $mkr, $Limit, $CancellationToken).Result
 
     }
     catch {
@@ -628,19 +548,7 @@ function New-OpenStackDatabase {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -653,8 +561,6 @@ function New-OpenStackDatabase {
         Write-Debug -Message "Collate.......: $Collate"
         Write-Debug -Message "RegionOverride: $RegionOverride" 
 
-        $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
-
         $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
         $dbname = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseName]) $DatabaseName
 
@@ -666,7 +572,7 @@ function New-OpenStackDatabase {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $ComputeDatabasesProvider.CreateDatabaseAsync($dbiid, $DBConfiguration, $CancellationToken).Result
+        $Provider.CreateDatabaseAsync($dbiid, $DBConfiguration, $CancellationToken).Result
 
     }
     catch {
@@ -716,21 +622,7 @@ function Get-OpenStackDatabaseInstance {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -744,12 +636,12 @@ function Get-OpenStackDatabaseInstance {
         if (![string]::IsNullOrEmpty($InstanceId)) {
             # Get one specific instance
             $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
-            $ComputeDatabasesProvider.GetDatabaseInstanceAsync($dbiid, $CancellationToken).Result
+            $Provider.GetDatabaseInstanceAsync($dbiid, $CancellationToken).Result
             
         } else {
             # Get the list of Instances
             $mkr = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $Marker
-            $ComputeDatabasesProvider.ListDatabaseInstancesAsync($mkr, $Limit, $CancellationToken).Result
+            $Provider.ListDatabaseInstancesAsync($mkr, $Limit, $CancellationToken).Result
         }
     }
     catch {
@@ -763,21 +655,7 @@ function Get-OpenStackDatabaseFlavor {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -787,9 +665,9 @@ function Get-OpenStackDatabaseFlavor {
         Write-Debug -Message "RegionOverride: $RegionOverride" 
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
-        $ListOfFlavors = $ComputeDatabasesProvider.ListFlavorsAsync($CancellationToken).Result
+        $ListOfFlavors = $Provider.ListFlavorsAsync($CancellationToken).Result
         foreach ($dbflavor in $ListOfFlavors) {
-            Add-Member -InputObject $dbflavor -MemberType NoteProperty -Name Region -Value $Region
+            Add-Member -InputObject $dbflavor -MemberType NoteProperty -Name Region -Value $Provider.Region
         }
         return $ListOfFlavors
 
@@ -831,21 +709,7 @@ function Get-OpenStackDatabaseUser {
         [Parameter (Mandatory=$False)] [string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -864,10 +728,10 @@ function Get-OpenStackDatabaseUser {
         
         if (![string]::IsNullOrEmpty($Username)) {
             $un = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.UserName]) $Username
-            Return $ComputeDatabasesProvider.GetUserAsync($dbiid, $un, $CancellationToken).Result
+            Return $Provider.GetUserAsync($dbiid, $un, $CancellationToken).Result
         } else {
             $un = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.UserName]) $Marker
-            $ComputeDatabasesProvider.ListDatabaseUsersAsync($dbiid, $un, $Limit, $CancellationToken).Result;
+            $Provider.ListDatabaseUsersAsync($dbiid, $un, $Limit, $CancellationToken).Result;
         }
     }
     catch {
@@ -887,21 +751,7 @@ function Grant-CloudDatabaseUserAccess {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -931,7 +781,7 @@ function Grant-CloudDatabaseUserAccess {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
 
-        $ComputeDatabasesProvider.GrantUserAccessAsync($dbiid, $dbname, $un, $CancellationToken).Result
+        $Provider.GrantUserAccessAsync($dbiid, $dbname, $un, $CancellationToken).Result
 
     }
     catch {
@@ -950,21 +800,7 @@ function Get-OpenStackDatabaseUserAccess {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -976,7 +812,6 @@ function Get-OpenStackDatabaseUserAccess {
         Write-Debug -Message "Host..........: $HostName"
         Write-Debug -Message "HostIPAddress.: $HostIPAddress"
         Write-Debug -Message "Region........: $Region"
-
 
 
         $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
@@ -991,7 +826,7 @@ function Get-OpenStackDatabaseUserAccess {
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $ComputeDatabasesProvider.ListUserAccessAsync($dbiid, $un, $CancellationToken).Result
+        $Provider.ListUserAccessAsync($dbiid, $un, $CancellationToken).Result
 
     }
     catch {
@@ -1007,21 +842,7 @@ function Remove-OpenStackDatabaseBackup {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1037,7 +858,7 @@ function Remove-OpenStackDatabaseBackup {
         $backupId = New-Object ([net.openstack.Providers.Rackspace.Objects.Databases.BackupId]) $BackupId
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $ComputeDatabasesProvider.RemoveBackupAsync($backupId, $CancellationToken).Result
+        $Provider.RemoveBackupAsync($backupId, $CancellationToken).Result
 
     }
     catch {
@@ -1080,21 +901,7 @@ function Remove-OpenStackDatabase {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1111,7 +918,7 @@ function Remove-OpenStackDatabase {
         $dbname = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseName]) $DatabaseName
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
-        $ComputeDatabasesProvider.RemoveDatabaseAsync($dbiid, $dbname, $CancellationToken).Result
+        $Provider.RemoveDatabaseAsync($dbiid, $dbname, $CancellationToken).Result
 
     }
     catch {
@@ -1127,21 +934,7 @@ function Remove-OpenStackDatabaseInstance {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1151,13 +944,11 @@ function Remove-OpenStackDatabaseInstance {
         Write-Debug -Message "InstanceId....: $InstanceId"
         Write-Debug -Message "Region........: $Region"
 
-
-
         $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         $AsyncCompletionOption = New-Object ([net.openstack.Core.AsyncCompletionOption])
 
-        $ComputeDatabasesProvider.RemoveDatabaseInstanceAsync($dbiid, $AsyncCompletionOption, $CancellationToken, $null).Result
+        $Provider.RemoveDatabaseInstanceAsync($dbiid, $AsyncCompletionOption, $CancellationToken, $null).Result
 
     }
     catch {
@@ -1174,21 +965,7 @@ function Remove-OpenStackDatabaseUser {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1199,12 +976,11 @@ function Remove-OpenStackDatabaseUser {
         Write-Debug -Message "InstanceId....: $InstanceId"
         Write-Debug -Message "Region........: $Region"
 
-
         $un = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.UserName]) $Username
         $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         
-        $ComputeDatabasesProvider.RemoveUserAsync($dbiid, $un, $CancellationToken).Result
+        $Provider.RemoveUserAsync($dbiid, $un, $CancellationToken).Result
 
     }
     catch {
@@ -1221,21 +997,7 @@ function Set-OpenStackDatabaseInstanceSize {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1246,14 +1008,12 @@ function Set-OpenStackDatabaseInstanceSize {
         Write-Debug -Message "InstanceId....: $InstanceId"
         Write-Debug -Message "Region........: $Region"
 
-
-
         $Flavor = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.FlavorRef]) $FlavorRef
         $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         $AsyncCompletionOption = New-Object ([net.openstack.Core.AsyncCompletionOption])
         
-        $ComputeDatabasesProvider.ResizeDatabaseInstanceAsync($dbiid, $Flavor, $AsyncCompletionOption, $CancellationToken, $null).Result
+        $Provider.ResizeDatabaseInstanceAsync($dbiid, $Flavor, $AsyncCompletionOption, $CancellationToken, $null).Result
 
     }
     catch {
@@ -1271,21 +1031,7 @@ function Set-OpenStackDatabaseInstanceVolumeSize {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1301,9 +1047,9 @@ function Set-OpenStackDatabaseInstanceVolumeSize {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         
         if($WaitForTask) {
-            $ComputeDatabasesProvider.ResizeDatabaseInstanceVolumeAsync($dbiid, $VolumeSizeGB, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.ResizeDatabaseInstanceVolumeAsync($dbiid, $VolumeSizeGB, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $ComputeDatabasesProvider.ResizeDatabaseInstanceVolumeAsync($dbiid, $VolumeSizeGB, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.ResizeDatabaseInstanceVolumeAsync($dbiid, $VolumeSizeGB, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }
 
     }
@@ -1321,21 +1067,7 @@ function Restart-OpenStackDatabaseInstance {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1346,15 +1078,13 @@ function Restart-OpenStackDatabaseInstance {
         Write-Debug -Message "WaitForTask...: $WaitForTask"
         Write-Debug -Message "Region........: $Region"
 
-
-
         $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 
         If ($WaitForTask) {
-            $ComputeDatabasesProvider.RestartDatabaseInstanceAsync($dbiid, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
+            $Provider.RestartDatabaseInstanceAsync($dbiid, [net.openstack.Core.AsyncCompletionOption]::RequestCompleted, $CancellationToken, $null).Result
         } else {
-            $ComputeDatabasesProvider.RestartDatabaseInstanceAsync($dbiid, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
+            $Provider.RestartDatabaseInstanceAsync($dbiid, [net.openstack.Core.AsyncCompletionOption]::RequestSubmitted, $CancellationToken, $null).Result
         }  
     }
     catch {
@@ -1372,21 +1102,7 @@ function Revoke-OpenStackDatabaseUserAccess {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1398,13 +1114,11 @@ function Revoke-OpenStackDatabaseUserAccess {
         Write-Debug -Message "InstanceId....: $InstanceId"
         Write-Debug -Message "Region........: $Region"
 
-
-
         $un = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.UserName]) $Username
         $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         
-        $ComputeDatabasesProvider.SetUserPasswordAsync($dbiid, $DatabaseName, $un, $CancellationToken).Result
+        $Provider.SetUserPasswordAsync($dbiid, $DatabaseName, $un, $CancellationToken).Result
 
     }
     catch {
@@ -1451,21 +1165,7 @@ function Set-OpenStackDatabaseUserPassword {
         [Parameter (Mandatory=$False)][string] $RegionOverride
         )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $ComputeDatabasesProvider = Get-OpenStackDatabasesProvider -Account $Account -RegionOverride $Region
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -1477,12 +1177,11 @@ function Set-OpenStackDatabaseUserPassword {
         Write-Debug -Message "InstanceId....: $InstanceId"
         Write-Debug -Message "RegionOverride: $RegionOverride" 
 
-
         $un = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.UserName]) $Username
         $dbiid = New-Object([net.openstack.Providers.Rackspace.Objects.Databases.DatabaseInstanceId]) $InstanceId
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
         
-        $ComputeDatabasesProvider.SetUserPasswordAsync($dbiid, $un, $NewPassword, $CancellationToken).Result
+        $Provider.SetUserPasswordAsync($dbiid, $un, $NewPassword, $CancellationToken).Result
 
     }
     catch {
