@@ -1,5 +1,0 @@
-Type,AccountName,CloudUsername,CloudPassword,CloudAPIKey,IdentityEndpointUri,Region,TenantId
-Rackspace,rackIAD,username_here,password_here,apikey_here,foo,IAD,123456
-Rackspace,rackDFW,username_here,password_here,apikey_here,foo,dfw,123456
-Rackspace,rackORD,username_here,password_here,apikey_here,foo,ord,123456
-OpenStack,devstack,username_here,password_here,foo,http://99.99.99.99:5000/v2.0/tokens/,RegionOne,username_here

@@ -11,7 +11,7 @@ Description
 ############################################################################################>
 
 
-function Get-Provider {
+function Script:Get-Provider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required OpenStack Account with -Account parameter"),
         [Parameter (Mandatory=$False)][string] $RegionOverride

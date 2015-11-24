@@ -10,7 +10,7 @@ Description
 
 ############################################################################################>
 
-function Get-Provider {
+function Script:Get-Provider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account with -Account parameter"),
         [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
