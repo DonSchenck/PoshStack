@@ -37,13 +37,13 @@ Copyright = ''
 Description = "PowerShell v5 module for OpenStack, based on the OpenStack.NET SDK"
 
 # Minimum version of the Windows PowerShell engine required by this module
- PowerShellVersion = '3.0'
+ PowerShellVersion = '5.0'
 
 # Name of the Windows PowerShell host required by this module
 # PowerShellHostName = ''
 
 # Minimum version of the Windows PowerShell host required by this module
- PowerShellHostVersion = '3.0'
+ PowerShellHostVersion = '5.0'
 
 # Minimum version of the .NET Framework required by this module
  DotNetFrameworkVersion = '4.0'
@@ -85,7 +85,6 @@ NestedModules =  @(
 #"PoshStack-CloudMonitoring.psm1",
 "PoshStack-OpenStackDatabases.psm1",
 "PoshStack-OpenStackObjectStorage.psm1",
-"PoshStack-OpenStackLoadBalancers.psm1",
 "PoshStack-Identity.psm1",
 "PoshStack-OpenStackBlockStorage.psm1",
 "PoshStack-OpenStackNetworks.psm1",

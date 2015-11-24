@@ -34,7 +34,6 @@
     <Compile Include="PoshStack-OpenStackCompute.psm1" />
     <Compile Include="PoshStack-OpenStackDatabases.psm1" />
     <Compile Include="PoshStack-OpenStackDNS.psm1" />
-    <Compile Include="PoshStack-OpenStackLoadBalancers.psm1" />
     <Compile Include="PoshStack-OpenStackNetworks.psm1" />
     <Compile Include="PoshStack-OpenStackObjectStorage.psm1" />
     <Compile Include="PoshStack.psd1" />
