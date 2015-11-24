@@ -172,7 +172,7 @@ function New-OpenStackDatabaseBackup {
  .PARAMETER BackupDescription
  Use this parameter to assign a description to the backup.
  
- .PARAMETER WaitForBuild
+ .PARAMETER WaitForTask
  Use this parameter to specify whether you want to wait for the build to complete or return control to the script immediately.
 
  .PARAMETER RegionOverride
@@ -242,7 +242,7 @@ function New-OpenStackDatabaseInstance {
  .PARAMETER FlavorId
  Use this parameter to specify the size of the RAM for the database.
 
- .PARAMETER WaitForBuild
+ .PARAMETER WaitForTask
  Use this parameter to specify whether you want to wait for the build to complete or return control to the script immediately.
 
  .PARAMETER SizeInGB
@@ -253,7 +253,7 @@ function New-OpenStackDatabaseInstance {
  This parameter will temporarily override the default region set in PoshStack configuration file. 
 
  .EXAMPLE
- PS C:\Users\Administrator> New-OpenStackDatabaseInstance -Account rackiad -InstanceName "ToBeDeleted" -FlavorId 2 -SizeInGB 5 -WaitForBuild $False
+ PS C:\Users\Administrator> New-OpenStackDatabaseInstance -Account rackiad -InstanceName "ToBeDeleted" -FlavorId 2 -SizeInGB 5 -WaitForTask $False
 
  .LINK
  http://docs.rackspace.com/cdb/api/v1.0/cdb-devguide/content/POST_createInstance__version___accountId__instances_Database_Instances.html
