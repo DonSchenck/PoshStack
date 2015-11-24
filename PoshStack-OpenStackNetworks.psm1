@@ -10,6 +10,31 @@ Description
 
 ############################################################################################>
 
+function Script:Get-Provider {
+    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
+        [Parameter (Mandatory=$False)][string] $RegionOverride = $null
+    )
+
+	$Provider = Get-OpenStackNetworkProvider -Account $Account
+	
+    if ($RegionOverride){
+        $Global:RegionOverride = $RegionOverride
+    }
+
+    # Use Region code associated with Account, or was an override provided?
+    if ($RegionOverride) {
+        $Region = $Global:RegionOverride
+    } else {
+        $Region = $Credentials.Region
+    }
+
+    Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Region
+
+	Return $Provider
+
+}
+
 function Get-OpenStackNetworkProvider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter")
@@ -64,21 +89,7 @@ function Remove-OpenStackNetwork {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $NetworkProvider = Get-OpenStackNetworkProvider -Account $Account
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -89,7 +100,7 @@ function Remove-OpenStackNetwork {
         Write-Debug -Message "RegionOverride..................: $RegionOverride" 
         Write-Debug -Message "Region..........................: $Region" 
 
-        $NetworkProvider.DeleteNetwork($NetworkID, $Region, $Null)
+        $Provider.DeleteNetwork($NetworkID, $Provider.Region, $Null)
 
     }
     catch {
@@ -130,21 +141,7 @@ function New-OpenStackNetwork {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $NetworkProvider = Get-OpenStackNetworkProvider -Account $Account
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -156,7 +153,7 @@ function New-OpenStackNetwork {
         Write-Debug -Message "RegionOverride..................: $RegionOverride" 
         Write-Debug -Message "Region..........................: $Region" 
 
-        $NetworkProvider.CreateNetwork($CIDR, $NetworkName, $Region, $Null)
+        $Provider.CreateNetwork($CIDR, $NetworkName, $Provider.Region, $Null)
 
     }
     catch {
@@ -199,21 +196,7 @@ function Get-OpenStackNetwork {
         [Parameter (Mandatory=$False)][string] $RegionOverride
     )
 
-    Get-OpenStackAccount -Account $Account
-    
-    if ($RegionOverride){
-        $Global:RegionOverride = $RegionOverride
-    }
-
-    # Use Region code associated with Account, or was an override provided?
-    if ($RegionOverride) {
-        $Region = $Global:RegionOverride
-    } else {
-        $Region = $Credentials.Region
-    }
-
-
-    $NetworkProvider = Get-OpenStackNetworkProvider -Account $Account
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride
 
     try {
 
@@ -225,9 +208,9 @@ function Get-OpenStackNetwork {
         Write-Debug -Message "Region..........................: $Region" 
 
         IF([string]::IsNullOrEmpty($NetworkID)) {    
-            $NetworkProvider.ListNetworks($Region, $Null)
+            $Provider.ListNetworks($Provider.Region, $Null)
         } else {
-            $NetworkProvider.ShowNetwork($NetworkID, $Region, $Null)
+            $Provider.ShowNetwork($NetworkID, $Provider.Region, $Null)
         }
 
     }
