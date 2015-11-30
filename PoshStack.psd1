@@ -82,7 +82,7 @@ Description = "PowerShell v5 module for OpenStack, based on the OpenStack.NET SD
 
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 NestedModules =  @(
-#"PoshStack-CloudMonitoring.psm1",
+"PoshStack-OpenStackCloudQueues.psm1",
 "PoshStack-OpenStackDatabases.psm1",
 "PoshStack-OpenStackObjectStorage.psm1",
 "PoshStack-Identity.psm1",
