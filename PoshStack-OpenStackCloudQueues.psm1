@@ -216,4 +216,31 @@ function Remove-OpenStackCloudQueue {
     }
 }
 
+# Issue 379 GetNodeHealthAsync is implemented
+function Get-OpenStackCloudQueueNodeHealth {
+	    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "-Account parameter is required."),
+        [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
+        [Parameter (Mandatory=$False)] [string]$RegionOverride = $Null
+    )
+
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Get-OpenStackCloudQueueNodeHealth"
+        Write-Debug -Message "Account...........: $Account" 
+        Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
+        Write-Debug -Message "RegionOverride....: $RegionOverride"
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+        $Provider.GetNodeHealthAsync($CancellationToken).Result
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+}
+
 Export-ModuleMember -Function *
