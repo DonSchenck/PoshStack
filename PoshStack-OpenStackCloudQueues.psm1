@@ -13,10 +13,9 @@ Description
 
 function Script:Get-Provider {
     Param(
-        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account with -Account parameter"),
-        [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
-		[Parameter (Mandatory=$True)] [Guid]   $QueueGUID,
-		[Parameter (Mandatory=$True)] [string] $RegionOverride
+        [Parameter (Mandatory=$True)]  [string] $Account = $(throw "-Account parameter is required."),
+        [Parameter (Mandatory=$False)] [bool]   $UseInternalUrl = $False,
+		[Parameter (Mandatory=$False)] [string] $RegionOverride = $Null
         )
 
     if ($RegionOverride){
@@ -30,11 +29,12 @@ function Script:Get-Provider {
         $Region = $Credentials.Region
     }
 
-	$Provider = Get-OpenStackCloudQueueProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl -QueueGUID $QueueGUID
+	$MyGUID = [GUID]::NewGuid()
+	$Provider = Get-OpenStackCloudQueueProvider -Account $Account -RegionOverride $Region -UseInternalUrl $UseInternalUrl -QueueGUID $MyGUID 
 
     Add-Member -InputObject $Provider -MemberType NoteProperty -Name Region -Value $Region
     Add-Member -InputObject $Provider -MemberType NoteProperty -Name UserInternalUrl -Value $UseInternalUrl
-	Add-Member -InputObject $Provider -MemberType NoteProperty -Name GUID -Value $QueueGUID
+	Add-Member -InputObject $Provider -MemberType NoteProperty -Name GUID -Value $MyGUID 
 
 	Return $Provider
 
@@ -42,10 +42,10 @@ function Script:Get-Provider {
 
 function Get-OpenStackCloudQueueProvider {
     Param(
-        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "-Account parameter is required."),
         [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
-		[Parameter (Mandatory=$True)] [Guid]   $QueueGUID = $(throw "Specify the required Queue GUID by using the -QueueGUID parameter"),
-        [Parameter (Mandatory=$True)] [string] $RegionOverride = $(throw "Please specify required Region by using the -RegionOverride parameter")
+        [Parameter (Mandatory=$False)][string] $RegionOverride = $null,
+		[Parameter (Mandatory=$True)] [Guid]   $QueueGUID = $(throw "-QueueGUID parameter is required.")
     )
 
     # The Account comes from the file CloudAccounts.csv
@@ -92,21 +92,20 @@ function Get-OpenStackCloudQueueProvider {
 # Issue 372 CreateQueueAsync is implemented
 function New-OpenStackCloudQueue {
 	    Param(
-        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
-        [Parameter (Mandatory=$True)] [system.guid]   $QueueGUID = $(throw "Please specify required Queue GUID by using the -QueueGUID parameter"),
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "-Account parameter is required."),
         [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
-        [Parameter (Mandatory=$True)] [string] $QueueName = $(throw "Please specify required -QueueName parameter"),
-        [Parameter (Mandatory=$True)][string] $RegionOverride
+        [Parameter (Mandatory=$False)][string] $RegionOverride = $False,
+
+        [Parameter (Mandatory=$True)] [string] $QueueName = $(throw "-QueueName parameter is required.")
     )
 
-	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl -QueueGUID $QueueGUID
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
         # DEBUGGING       
         Write-Debug -Message "New-OpenStackCloudQueue"
         Write-Debug -Message "Account...........: $Account" 
-        Write-Debug -Message "Queueguid.........: $QueueGUID"
         Write-Debug -Message "QueueName.........: $QueueName"
         Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
@@ -153,29 +152,63 @@ function New-OpenStackCloudQueue {
 # Issue 384 ListQueuesAsync is implemented
 function Get-OpenStackCloudQueue {
 	    Param(
-        [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
-        [Parameter (Mandatory=$True)] [string] $Marker = $(throw "Please specify required -Marker parameter"),
-        [Parameter (Mandatory=$True)] [string] $RegionOverride,
-		[Parameter (Mandatory=$True)] [Guid]   $QueueGUID = $(throw "Specify the required Queue GUID by using the -QueueGUID parameter"),
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "-Account parameter is required."),
+        [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
+        [Parameter (Mandatory=$False)][string] $RegionOverride = $Null,
+
+        [Parameter (Mandatory=$False)][string] $Marker = $Null,
         [Parameter (Mandatory=$False)][int]    $Limit = 100,
-        [Parameter (Mandatory=$False)][bool]   $Detailed = $True,
-        [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False
+        [Parameter (Mandatory=$False)][bool]   $Detailed = $True
     )
 
-	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl -QueueGUID $QueueGUID
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
 
     try {
 
         # DEBUGGING       
         Write-Debug -Message "Get-OpenStackCloudQueue"
         Write-Debug -Message "Account...........: $Account" 
-        Write-Debug -Message "Queueguid.........: $QueueGUID"
         Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
         Write-Debug -Message "RegionOverride....: $RegionOverride" 
 
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
-		$qn = New-Object ([net.openstack.Core.Domain.Queues.QueueName]) $Marker
-        $Provider.ListQueuesAsync($qn, $Limit, $Detailed, $CancellationToken).Result
+		if (!$Marker) {
+	        $Provider.ListQueuesAsync($null, $Limit, $Detailed, $CancellationToken).Result
+		} else {
+			$qn = New-Object ([net.openstack.Core.Domain.Queues.QueueName]) $Marker
+	        $Provider.ListQueuesAsync($qn, $Limit, $Detailed, $CancellationToken).Result
+		}
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+}
+
+# Issue 375 DeleteQueueAsync is implemented
+function Remove-OpenStackCloudQueue {
+	    Param(
+        [Parameter (Mandatory=$True)] [string] $Account = $(throw "-Account parameter is required."),
+        [Parameter (Mandatory=$False)][bool]   $UseInternalUrl = $False,
+        [Parameter (Mandatory=$False)] [string]$RegionOverride = $Null,
+
+        [Parameter (Mandatory=$True)] [string] $QueueName = $(throw "-QueueName parameter is required.")
+    )
+
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Remove-OpenStackCloudQueue"
+        Write-Debug -Message "Account...........: $Account" 
+        Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
+        Write-Debug -Message "RegionOverride....: $RegionOverride"
+		Write-Debug -Message "QueueName.........: $QueueName" 
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+		$qn = New-Object ([net.openstack.Core.Domain.Queues.QueueName]) $QueueName
+        $Provider.DeleteQueueAsync($qn, $CancellationToken).Result
 
     }
     catch {
