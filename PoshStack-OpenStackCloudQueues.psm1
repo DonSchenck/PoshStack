@@ -243,4 +243,34 @@ function Get-OpenStackCloudQueueNodeHealth {
     }
 }
 
+# Issue 389 SetQueueMetadataAsync is implemented
+function Set-OpenStackCloudQueueMetadata {
+	Param(
+		[Parameter (Mandatory=$True)]  [string] $Account = $(throw "-Account parameter is required."),
+		[Parameter (Mandatory=$False)] [bool]   $UseInternalUrl = $False,
+		[Parameter (Mandatory=$False)] [string] $RegionOverride = $Null,
+
+		[Parameter (Mandatory=$True)]  [string] $QueueName = $(throw "-QueueName parameter is required."),
+		[Parameter (Mandatory=$True)]  [hashtable] $Metadata = $(throw "-Metadata parameter is required.")
+	)
+
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Set-OpenStackCloudQueueMetadata"
+        Write-Debug -Message "Account...........: $Account" 
+        Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
+        Write-Debug -Message "RegionOverride....: $RegionOverride"
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+        $Provider.SetQueueMetadataAsync($QueueName, $Metadata, $CancellationToken).Result
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+}
+
 Export-ModuleMember -Function *
