@@ -10,6 +10,16 @@ Description
 
 ############################################################################################>
 
+class DNSDomainRecordConfiguration 
+{
+	[string] $BeginningIPAddress;
+	[string] $EndingIPAddress;
+}
+
+function New-DNSDomainRecordConfiguration {
+	return [DNSDomainRecordConfiguration]::new()	
+}
+
 function Script:Get-Provider {
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account with -Account parameter"),

@@ -113,7 +113,6 @@ function Confirm-OpenStackDatabaseRootEnabledStatus {
 
 # Issue 136
 function New-OpenStackDatabaseBackup {
-
     Param(
         [Parameter (Mandatory=$True)] [string] $Account = $(throw "Please specify required Cloud Account by using the -Account parameter"),
         [Parameter (Mandatory=$True)] [string] $InstanceId = $(throw "Please specify required Instance ID by using the -InstanceId parameter"),
