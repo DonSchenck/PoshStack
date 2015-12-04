@@ -392,7 +392,81 @@ function Read-OpenStackCloudQueueMessage {
     catch {
         Invoke-Exception($_.Exception)
     }
-
 }
+
+# Issue 373 DeleteMessageAsync is implemented
+# Issue 374 DeleteMessagesAsync is implemented
+
+function Remove-OpenStackCloudQueueMessage {
+	Param(
+		[Parameter (Mandatory=$True)]  [string] $Account = $(throw "-Account parameter is required."),
+		[Parameter (Mandatory=$False)] [bool]   $UseInternalUrl = $False,
+		[Parameter (Mandatory=$False)] [string] $RegionOverride = $Null,
+
+		[Parameter (Mandatory=$True)]  [string] $QueueName = $(throw "-QueueName parameter is required."),
+		[Parameter (Mandatory=$True)]  [net.openstack.Core.Domain.Queues.MessageId[]] $ListOfMessageId = $(throw "-ListOfMessageId parameter is required."),
+		[Parameter (Mandatory=$True)]  [net.openstack.Core.Domain.Queues.Claim] $Claim = $(throw "-Claim parameter is required.")
+	)
+
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Remove-OpenStackCloudQueueMessage"
+        Write-Debug -Message "Account...........: $Account" 
+        Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
+        Write-Debug -Message "RegionOverride....: $RegionOverride"
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+		$qn = New-Object ([net.openstack.Core.Domain.Queues.QueueName]) $QueueName
+
+        $Provider.cqp.DeleteMessagesAsync($qn, $ListOfMessageId, $Claim, $CancellationToken)
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+}
+
+# Issue 383 ListMessagesAsync is implemented
+function Get-OpenStackCloudQueueMessage {
+	Param(
+		[Parameter (Mandatory=$True)]  [string] $Account = $(throw "-Account parameter is required."),
+		[Parameter (Mandatory=$False)] [bool]   $UseInternalUrl = $False,
+		[Parameter (Mandatory=$False)] [string] $RegionOverride = $Null,
+
+		[Parameter (Mandatory=$True)]  [string] $QueueName = $(throw "-QueueName parameter is required."),
+		[Parameter (Mandatory=$False)] [net.openstack.Core.Domain.Queues.QueuedMessageListId] $Marker = $Null,
+		[Parameter (Mandatory=$False)] [int] $Limit = 100,
+		[Parameter (Mandatory=$False)] [bool] $Echo = $True,
+		[Parameter (Mandatory=$False)] [bool] $IncludeClaimed = $True
+	)
+
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Remove-OpenStackCloudQueueMessage"
+        Write-Debug -Message "Account...........: $Account" 
+        Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
+        Write-Debug -Message "RegionOverride....: $RegionOverride"
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+		$qn = New-Object ([net.openstack.Core.Domain.Queues.QueueName]) $QueueName
+
+		if (!$Marker) {
+	        $Provider.ListMessagesAsync($qn, $null, $Limit, $Echo, $IncludeClaimed, $CancellationToken).Result
+		} else {
+	        $Provider.ListMessagesAsync($qn, $Marker, $Limit, $Echo, $IncludeClaimed, $CancellationToken).Result
+		}
+
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+}
+
 
 Export-ModuleMember -Function *

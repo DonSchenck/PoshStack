@@ -16,8 +16,14 @@ $listofmsgs = @()
 $listofmsgs += "Hello world"
 $listofmsgs += "Second message"
 #Write-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -TTL $TTL -ListOfMessages $listofmsgs -RegionOverride IAD
-$readmessages = Read-OpenStackCloudQueueMessage -Account rackiad -Queuename "queuename" -TTL $TTL -GracePeriod $TTL -NumberToRetrieve 4 -RegionOverride IAD
-Write-Host $readmessages.Messages.Count
-ForEach($m in $readmessages.Messages) {
-      Write-Host "body " $m.Body.ToString()
+#$readmessages = Read-OpenStackCloudQueueMessage -Account rackiad -Queuename "queuename" -TTL $TTL -GracePeriod $TTL -NumberToRetrieve 4 -RegionOverride IAD
+#Write-Host $readmessages.Messages.Count
+#ForEach($m in $readmessages.Messages) {
+#      Write-Host "body " $m.Body.ToString()
+#}
+$listOfMessages = Get-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename"
+ForEach($cqm in $listOfMessages) {
+    Write-Host "MessageID: " $cqm.Id
 }
+
+Remove-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -ListOfMessageId
