@@ -33,3 +33,5 @@ Get-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -MessageI
 
 #Remove-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -ListOfMessageId
 Get-OpenStackCloudQueueHome -Account rackiad
+
+Confirm-OpenStackCloudQueueExists -Account rackiad -QueueName "queuename"
