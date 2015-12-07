@@ -430,17 +430,41 @@ function Remove-OpenStackCloudQueueMessage {
 }
 
 # Issue 383 ListMessagesAsync is implemented
+# Issue 377 GetMessageAsync is implemented
+# Issue 378 GetMessagesAsync is implemented
 function Get-OpenStackCloudQueueMessage {
+    [CmdletBinding()]
 	Param(
-		[Parameter (Mandatory=$True)]  [string] $Account = $(throw "-Account parameter is required."),
-		[Parameter (Mandatory=$False)] [bool]   $UseInternalUrl = $False,
-		[Parameter (Mandatory=$False)] [string] $RegionOverride = $Null,
+		[Parameter(ParameterSetName="List", Mandatory=$True)]
+		[Parameter(ParameterSetName="Details", Mandatory=$True)]
+		[string] $Account = $(throw "-Account parameter is required."),
 
-		[Parameter (Mandatory=$True)]  [string] $QueueName = $(throw "-QueueName parameter is required."),
-		[Parameter (Mandatory=$False)] [net.openstack.Core.Domain.Queues.QueuedMessageListId] $Marker = $Null,
-		[Parameter (Mandatory=$False)] [int] $Limit = 100,
-		[Parameter (Mandatory=$False)] [bool] $Echo = $True,
-		[Parameter (Mandatory=$False)] [bool] $IncludeClaimed = $True
+		[Parameter(ParameterSetName="List", Mandatory=$False)]
+		[Parameter(ParameterSetName="Details", Mandatory=$False)]
+		[bool]   $UseInternalUrl = $False,
+
+		[Parameter(ParameterSetName="List", Mandatory=$False)]
+		[Parameter(ParameterSetName="Details", Mandatory=$False)]
+		[string] $RegionOverride = $Null,
+
+		[Parameter(ParameterSetName="List", Mandatory=$True)]
+		[Parameter(ParameterSetName="Details", Mandatory=$True)]
+		[string] $QueueName = $(throw "-QueueName parameter is required."),
+
+		[Parameter(ParameterSetName="List", Mandatory=$False)]
+		[net.openstack.Core.Domain.Queues.QueuedMessageListId] $Marker = $Null,
+
+		[Parameter(ParameterSetName="Details", Mandatory=$True)]
+		[net.openstack.Core.Domain.Queues.MessageId[]] $MessageIDList,
+
+		[Parameter(ParameterSetName="List", Mandatory=$False)]
+		[int] $Limit = 100,
+
+		[Parameter(ParameterSetName="List", Mandatory=$False)]
+		[bool] $Echo = $True,
+
+		[Parameter(ParameterSetName="List", Mandatory=$False)]
+		[bool] $IncludeClaimed = $True
 	)
 
 	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
@@ -456,10 +480,14 @@ function Get-OpenStackCloudQueueMessage {
         $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
 		$qn = New-Object ([net.openstack.Core.Domain.Queues.QueueName]) $QueueName
 
-		if (!$Marker) {
-	        $Provider.ListMessagesAsync($qn, $null, $Limit, $Echo, $IncludeClaimed, $CancellationToken).Result
+		if ($MessageIDList){
+			$Provider.GetMessagesAsync($qn, $MessageIDList, $CancellationToken).Result
 		} else {
-	        $Provider.ListMessagesAsync($qn, $Marker, $Limit, $Echo, $IncludeClaimed, $CancellationToken).Result
+			if (!$Marker) {
+				$Provider.ListMessagesAsync($qn, $null, $Limit, $Echo, $IncludeClaimed, $CancellationToken).Result
+			} else {
+				$Provider.ListMessagesAsync($qn, $Marker, $Limit, $Echo, $IncludeClaimed, $CancellationToken).Result
+			}
 		}
 
     }
