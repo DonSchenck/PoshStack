@@ -32,3 +32,4 @@ ForEach($cqm in $listOfMessages) {
 Get-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -MessageIDList $messageIDList
 
 #Remove-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -ListOfMessageId
+Get-OpenStackCloudQueueHome -Account rackiad

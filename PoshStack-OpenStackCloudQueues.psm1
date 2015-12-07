@@ -472,7 +472,7 @@ function Get-OpenStackCloudQueueMessage {
     try {
 
         # DEBUGGING       
-        Write-Debug -Message "Remove-OpenStackCloudQueueMessage"
+        Write-Debug -Message "Get-OpenStackCloudQueueMessage"
         Write-Debug -Message "Account...........: $Account" 
         Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
         Write-Debug -Message "RegionOverride....: $RegionOverride"
@@ -496,5 +496,37 @@ function Get-OpenStackCloudQueueMessage {
     }
 }
 
+# Issue 376 GetHomeAsync is implemented
+function Get-OpenStackCloudQueueHome {
+    [CmdletBinding()]
+	Param(
+		[Parameter(Mandatory=$True)]
+		[string] $Account = $(throw "-Account parameter is required."),
+
+		[Parameter(Mandatory=$False)]
+		[bool]   $UseInternalUrl = $False,
+
+		[Parameter(Mandatory=$False)]
+		[string] $RegionOverride = $Null
+	)
+
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Get-OpenStackCloudQueueHome"
+        Write-Debug -Message "Account...........: $Account" 
+        Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
+        Write-Debug -Message "RegionOverride....: $RegionOverride"
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+
+		$Provider.GetHomeAsync($CancellationToken).Result
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
+}
 
 Export-ModuleMember -Function *
