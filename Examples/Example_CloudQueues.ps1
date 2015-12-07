@@ -35,3 +35,5 @@ Get-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -MessageI
 Get-OpenStackCloudQueueHome -Account rackiad
 
 Confirm-OpenStackCloudQueueExists -Account rackiad -QueueName "queuename"
+
+Get-OpenStackCloudQueueStatistics -Account rackiad -QueueName "queuename"

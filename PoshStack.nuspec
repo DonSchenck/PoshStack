@@ -2,13 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>PoshStack</id>
-        <version>0.3.18</version>
+        <version>0.3.19</version>
         <authors>opensource</authors>
         <owners>opensource</owners>
         <projectUrl>https://Github.com/DonSchenck/PoshStack</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>PoshStack is the PowerShell client for OpenStack.</description>
-        <releaseNotes>Github issues 387 closed on this build.</releaseNotes>
+        <releaseNotes>Github issue 382 closed on this build.</releaseNotes>
         <copyright>Copyright 2015</copyright>
         <tags>PowerShell OpenStack</tags>
     </metadata>

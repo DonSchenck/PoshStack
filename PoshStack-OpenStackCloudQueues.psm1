@@ -564,7 +564,43 @@ function Confirm-OpenStackCloudQueueExists {
     catch {
         Invoke-Exception($_.Exception)
     }
+}
 
+# Issue 382 GetQueueStatisticsAsync is implemented
+function Get-OpenStackCloudQueueStatistics {
+    [CmdletBinding()]
+	Param(
+		[Parameter(Mandatory=$True)]
+		[string] $Account = $(throw "-Account parameter is required."),
+
+		[Parameter(Mandatory=$False)]
+		[bool]   $UseInternalUrl = $False,
+
+		[Parameter(Mandatory=$False)]
+		[string] $RegionOverride = $Null,
+
+		[Parameter(Mandatory=$True)]
+		[string] $QueueName = $(throw "-QueueName parameter is required.")
+	)
+
+	$Provider = Get-Provider -Account $Account -RegionOverride $RegionOverride -UseInternalUrl $UseInternalUrl
+
+    try {
+
+        # DEBUGGING       
+        Write-Debug -Message "Get-OpenStackCloudQueueStatistics"
+        Write-Debug -Message "Account...........: $Account" 
+        Write-Debug -Message "UseInternalUrl....: $UseInternalUrl"
+        Write-Debug -Message "RegionOverride....: $RegionOverride"
+
+        $CancellationToken = New-Object ([System.Threading.CancellationToken]::None)
+		$qn = New-Object ([net.openstack.Core.Domain.Queues.QueueName]) $QueueName
+
+		$Provider.GetQueueStatisticsAsync($qn, $CancellationToken).Result
+    }
+    catch {
+        Invoke-Exception($_.Exception)
+    }
 }
 
 Export-ModuleMember -Function *
