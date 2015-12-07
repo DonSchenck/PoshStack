@@ -22,8 +22,13 @@ $listofmsgs += "Second message"
 #      Write-Host "body " $m.Body.ToString()
 #}
 $listOfMessages = Get-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename"
+$messageIDList = @()
 ForEach($cqm in $listOfMessages) {
+    $messageIDList += $cqm.Id
+
     Write-Host "MessageID: " $cqm.Id
 }
 
-Remove-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -ListOfMessageId
+Get-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -MessageIDList $messageIDList
+
+#Remove-OpenStackCloudQueueMessage -Account rackiad -QueueName "queuename" -ListOfMessageId
